@@ -1,0 +1,12 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint-config-standard"
+  ],
+  "jsRules": {},
+  "rules": {
+    "await-promise": [true, "RequestPromise"],
+    "ordered-imports": true
+  },
+  "rulesDirectory": []
+}

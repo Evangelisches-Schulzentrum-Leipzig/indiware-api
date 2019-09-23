@@ -17,6 +17,7 @@
  */
 
 import { Router } from 'express'
+import { flatten } from 'lodash'
 import { SchoolConfiguration } from '../config'
 import { PlanData } from '../data'
 import { query } from '../query'
@@ -94,11 +95,18 @@ export class SchoolWorker {
             visibilityConditionId: '_true'
           })),
           configValidationConditionId: 'hasClassSelection',
-          contentBucketSets: data.classes.map((className) => ({
-            id: urlSafeClassName(className),
-            usageConditionId: 'isClassSelected-' + className,
-            type: 'plan'
-          })),
+          contentBucketSets: [
+            ...data.classes.map((className) => ({
+              id: urlSafeClassName(className),
+              usageConditionId: 'isClassSelected-' + className,
+              type: 'plan'
+            })),
+            {
+              id: 'default',
+              usageConditionId: '_true',
+              type: 'content'
+            }
+          ],
           conditionSets: [
             ...data.classes.map((className) => ({
               id: 'isClassSelected-' + className,
@@ -164,6 +172,24 @@ export class SchoolWorker {
 
         res.json({
           items
+        })
+      }).catch((ex) => next(ex))
+    })
+
+    router.get('/content/default', (req, res, next) => {
+      this.lastSuccessPromise.then((data) => {
+        res.json({
+          file: [],
+          message: flatten(
+            data.plans.map((plan) => (
+              plan.messages.map((message, index) => ({
+                id: plan.date + '-' + index,
+                title: plan.date,
+                content: message,
+                notify: false
+              }))
+            ))
+          )
         })
       }).catch((ex) => next(ex))
     })

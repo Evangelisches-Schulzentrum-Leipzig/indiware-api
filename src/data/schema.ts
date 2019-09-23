@@ -35,5 +35,6 @@ export interface PlanData {
         info: string | null
       }>
     }>
+    messages: Array<string>
   }>
 }

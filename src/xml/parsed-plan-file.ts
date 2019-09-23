@@ -39,4 +39,5 @@ export interface ParsedPlanFile {
       info: string | null
     }>
   }>
+  messages: Array<string>
 }

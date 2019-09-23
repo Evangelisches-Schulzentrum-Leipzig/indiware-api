@@ -62,6 +62,9 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
     throw new Error('duplicate free days')
   }
 
+  const messages = input.VpMobil[0].ZusatzInfo ?
+    input.VpMobil[0].ZusatzInfo[0].ZiZeile.map((message) => readOptionalTextElement(message)).filter((item) => !!item) as Array<string> : []
+
   const classes = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
     const title = classInput.Kurz[0]._text[0]
 
@@ -130,6 +133,7 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
     date: dateMoment.format('YYYY-MM-DD'),
     lastModified: lastModifiedMoment.valueOf(),
     freeDays,
-    classes
+    classes,
+    messages
   }
 }

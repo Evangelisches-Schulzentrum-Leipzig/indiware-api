@@ -61,7 +61,7 @@ async function getStatus () {
 }
 
 app.get('/vp-status', (_, res) => {
-  getStatus().then((result) => res.end(result)).catch((ex) => res.end('failed to get status'))
+  getStatus().then((result) => res.end(result)).catch(() => res.end('failed to get status'))
 })
 
 workers.forEach((worker) => {

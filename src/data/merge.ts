@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { sortBy, uniq, uniqBy } from 'lodash'
+import { flatten, sortBy, uniq, uniqBy } from 'lodash'
 import { ParsedPlanFile } from '../xml'
 import { PlanData } from './schema'
 
@@ -58,7 +58,8 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
     return {
       date,
       lastModified,
-      classes: classPlans
+      classes: classPlans,
+      messages: file.messages
     }
   })
 

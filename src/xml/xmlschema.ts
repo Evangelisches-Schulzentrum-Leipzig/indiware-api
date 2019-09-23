@@ -84,7 +84,21 @@ export interface XmlFileSchema {
             If: [{} | XmlTextElement] // if it is a text, then the text describes a change
           }>
         }]
+        Klausuren?: [{
+          Klausur: Array<{
+            KlJahrgang: [XmlTextElement]
+            KlKurs: [XmlTextElement]
+            KlKursleiter: [XmlTextElement]
+            KlStunde: [XmlTextElement]
+            KlBeginn: [XmlTextElement]
+            KlDauer: [XmlTextElement]
+            KlKinfo: [{} | XmlTextElement]
+          }>
+        }]
       }>
+    }]
+    ZusatzInfo?: [{
+      ZiZeile: Array<[XmlTextElement] | {}>
     }]
   }]
 }

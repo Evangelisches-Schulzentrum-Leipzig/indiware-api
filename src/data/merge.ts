@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { flatten, sortBy, uniq, uniqBy } from 'lodash'
+import { sortBy, uniq, uniqBy } from 'lodash'
 import { ParsedPlanFile } from '../xml'
 import { PlanData } from './schema'
 

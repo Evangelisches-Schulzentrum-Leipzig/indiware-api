@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2020 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -72,7 +72,28 @@ export async function query ({ url, timezone, locale }: {
   const data = without(dataByDate, null) as Array<ParsedPlanFile>
 
   if (data.length === 0) {
-    throw new Error('no data')
+    const planUrl = url + 'Klassen.xml'
+    const planContent: request.FullResponse = await request({
+      uri: planUrl,
+      simple: false,
+      resolveWithFullResponse: true
+    })
+
+    if ((planContent.statusCode === 300) || (planContent.statusCode === 404)) {
+      throw new Error('no fallback plan found')
+    }
+
+    if (planContent.statusCode !== 200) {
+      throw new Error('failed to query ' + planUrl + ' - ' + planContent.statusCode)
+    }
+
+    const parsedPlanFile = parsePlanFile({
+      input: planContent.body,
+      timezone,
+      locale
+    })
+
+    return mergePlanFiles([ parsedPlanFile ])
   }
 
   return mergePlanFiles(data)

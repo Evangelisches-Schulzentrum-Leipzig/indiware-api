@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2020 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -46,7 +46,7 @@ export async function query ({ url, timezone, locale }: {
       resolveWithFullResponse: true
     })
 
-    if ((planContent.statusCode === 300) || (planContent.statusCode === 404)) {
+    if ((planContent.statusCode === 300) || (planContent.statusCode === 404) || (planContent.statusCode === 503)) {
       // ignore this date, there is no plan for it
 
       return null

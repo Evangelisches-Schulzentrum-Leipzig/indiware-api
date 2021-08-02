@@ -77,6 +77,9 @@ export class SchoolWorker {
         console.warn('crawling failed', ex)
 
         this.lastPromise = Promise.reject(ex)
+
+        // required to prevent an unhandled Promise rejection
+        this.lastPromise.catch(() => null)
       }
     }
   }

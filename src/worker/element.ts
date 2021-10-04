@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from 'express'
+import * as auth from 'basic-auth'
+import { Request, Response, Router } from 'express'
 import { flatten } from 'lodash'
 import { SchoolConfiguration } from '../config'
 import { PlanData } from '../data'
@@ -87,24 +88,58 @@ export class SchoolWorker {
   createRouter (): Router {
     const router = Router()
 
+    const passwordConfigItems = this.config.requestedPassword === null ? [] : [
+      {
+        param: 'password',
+        type: 'password',
+        visibilityConditionId: '_true',
+        value: '',
+        label: 'Passwort'
+      }
+    ]
+
+    const passwordParamContentBucketBase = this.config.requestedPassword === null ? {} : {
+      passwordParam: 'password'
+    }
+
+    const isAuthValid = (req: Request, res: Response) => {
+      if (this.config.requestedPassword !== null) {
+        const authData = auth(req)
+
+        if ((!authData) || authData.pass !== this.config.requestedPassword) {
+          res.setHeader('WWW-Authenticate', 'Basic realm="Login"')
+          res.sendStatus(401)
+          return false
+        }
+      }
+
+      return true
+    }
+
     router.get('/config/default', (_, res, next) => {
       this.lastSuccessPromise.then((data) => {
+        const classListConfigItems = data.classes.map((className) => ({
+          param: this.config.classNameField,
+          type: 'radio',
+          value: className,
+          label: className,
+          visibilityConditionId: '_true'
+        }))
+
+        const config = [...passwordConfigItems, ...classListConfigItems]
+
         res.json({
-          config: data.classes.map((className) => ({
-            param: this.config.classNameField,
-            type: 'radio',
-            value: className,
-            label: className,
-            visibilityConditionId: '_true'
-          })),
+          config,
           configValidationConditionId: 'hasClassSelection',
           contentBucketSets: [
             ...data.classes.map((className) => ({
+              ...passwordParamContentBucketBase,
               id: urlSafeClassName(className),
               usageConditionId: 'isClassSelected-' + className,
               type: 'plan'
             })),
             {
+              ...passwordParamContentBucketBase,
               id: 'default',
               usageConditionId: '_true',
               type: 'content'
@@ -129,6 +164,8 @@ export class SchoolWorker {
     })
 
     router.get('/plan/:planid', (req, res, next) => {
+      if (!isAuthValid(req, res)) return
+
       const planId: string = req.params.planid
 
       this.lastSuccessPromise.then((data) => {
@@ -180,6 +217,8 @@ export class SchoolWorker {
     })
 
     router.get('/content/default', (req, res, next) => {
+      if (!isAuthValid(req, res)) return
+
       this.lastSuccessPromise.then((data) => {
         res.json({
           file: [],

@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { uniq, uniqBy } from 'lodash'
+import { max, uniq, uniqBy } from 'lodash'
 import * as moment from 'moment-timezone'
 import { ParsedPlanFile } from './parsed-plan-file'
 import {
@@ -25,7 +25,8 @@ import {
 } from './postprocess-utils'
 import { XmlFileSchema } from './xmlschema'
 
-const classNameRegex = /^[0-9/]*$/
+const classNameRegex = /^[0-9/ a-z]*$/
+const classicClassNameRegex = /^[0-9]* [a-z]*$/
 
 export function postprocessPlanFile ({ input, locale, timezone }: {
   input: XmlFileSchema
@@ -65,7 +66,7 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
   const messages = input.VpMobil[0].ZusatzInfo ?
     input.VpMobil[0].ZusatzInfo[0].ZiZeile.map((message) => readOptionalTextElement(message)).filter((item) => !!item) as Array<string> : []
 
-  const classes = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
+  let classes = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
     const title = classInput.Kurz[0]._text[0]
 
     if (!classNameRegex.test(title)) {
@@ -92,9 +93,9 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
 
     const plan = (classInput.Pl[0].Std || []).map((lessonInput) => {
       const lesson = parseNumberField(lessonInput.St[0]._text[0], 'lesson')
-      const subject = sanitizeEmptyValues(lessonInput.Fa[0]._text[0])
+      const subject = sanitizeEmptyValues(readOptionalTextElement(lessonInput.Fa[0]))
       const subjectChanged = hasAttributes(lessonInput.Fa[0])
-      const teacher = sanitizeEmptyValues(lessonInput.Le[0]._text[0])
+      const teacher = sanitizeEmptyValues(readOptionalTextElement(lessonInput.Le[0]))
       const teacherChanged = hasAttributes(lessonInput.Le[0])
       const room = sanitizeEmptyValues(readOptionalTextElement(lessonInput.Ra[0]))
       const roomChanged = hasAttributes(lessonInput.Ra[0])
@@ -129,11 +130,30 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
     throw new Error('duplicate classes')
   }
 
+  let classesWithSortTitle
+
+  if (!classes.some((item) => !classicClassNameRegex.test(item.title))) {
+    const longestClassNamePrefix = max(classes.map((item) => item.title.split(' ')[0].length)) || 0
+
+    classesWithSortTitle = classes.map((item) => {
+      const parts = item.title.split(' ')
+
+      parts[0] = parts[0].padStart(longestClassNamePrefix, '0')
+
+      return { ...item, sortTitle: parts.join(' ') }
+    })
+  } else {
+    classesWithSortTitle = classes.map((item) => ({
+      ...item,
+      sortTitle: item.title
+    }))
+  }
+
   return {
     date: dateMoment.format('YYYY-MM-DD'),
     lastModified: lastModifiedMoment.valueOf(),
     freeDays,
-    classes,
+    classes: classesWithSortTitle,
     messages
   }
 }

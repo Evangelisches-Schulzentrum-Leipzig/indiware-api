@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -27,7 +27,7 @@ export interface XmlFileSchema {
   _declaration: {
     _attributes: {
       version: string
-      encoding: 'utf-8'
+      encoding: 'utf-8' | 'UTF-8'
     }
   }
   VpMobil: [{
@@ -37,6 +37,9 @@ export interface XmlFileSchema {
       DatumPlan: [XmlTextElement]   // Donnerstag, 05. September 2019
       datei: [XmlTextElement]
       nativ: [XmlTextElement]
+      woche?: [XmlTextElement]
+      tageprowoche?: [XmlTextElement]
+      schulnummer?: [{}]
     }]
     FreieTage: [{
       ft: Array<XmlTextElement>     // 190801 - YYMMDD
@@ -45,43 +48,50 @@ export interface XmlFileSchema {
       Kl: Array<{
         Kurz: [XmlTextElement]        // class name
         Kurse: [{/* note: there was no case yet where this was set */}]
+        Hash?: [{/* note: there was no case yet where this was set */}]
         Unterricht: [{
           Ue?: Array<{
             UeNr: [{
               _attributes: {
                 UeLe: string
                 UeFa: string
+                UeGr?: string         // related to the course
               }
               _text: [string]         // unknown what this is for
             }]
-          }>                        // looks like this shows the teachers for the subjects
+          }>                          // looks like this shows the teachers for the subjects
         }]
         Pl: [{
           Std?: Array<{
             St: [XmlTextElement]  // lesson number
             Fa: [XmlTextElement | {
               // the '---' says that something was removed
-              _text: [string | '---']
+              _text?: [string | '---']
               _attributes: {
                 FaAe: 'FaGeaendert'
               }
-            }]  // subject
+            } | {}]  // subject
             Le: [XmlTextElement | {
               // the '&nbsp;' says that something was removed
-              _text: ['&nbsp;' | string]
+              _text?: ['&nbsp;' | string]
               _attributes: {
                 LeAe: 'LeGeaendert'
               }
-            }]  // teacher
+            } | {}]  // teacher
             Ra: [XmlTextElement | {
               // the '&nbsp;' says that something was removed
               _text?: ['&nbsp;' | string]
               _attributes: {
                 RaAe: 'RaGeaendert'
               }
-            }]  // room
+            } | {}]  // room
             Nr?: [XmlTextElement]  // refers to the UE items
             If: [{} | XmlTextElement] // if it is a text, then the text describes a change
+            // unused, refers to the time of day as string
+            Beginn?: [XmlTextElement]
+            Ende?: [XmlTextElement]
+            // course, seems to be equal to Fa, unused
+            Ku2?: [XmlTextElement]
           }>
         }]
         Klausuren?: [{
@@ -93,6 +103,16 @@ export interface XmlFileSchema {
             KlBeginn: [XmlTextElement]
             KlDauer: [XmlTextElement]
             KlKinfo: [{} | XmlTextElement]
+          }>
+        }]
+        // this is unused
+        KlStunden?: [{
+          KlSt: Array<{
+            _attributes: {
+              ZeitVon: string
+              ZeitBis: string
+            },
+            _text: [string]
           }>
         }]
       }>

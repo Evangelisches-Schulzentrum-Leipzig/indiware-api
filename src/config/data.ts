@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -27,6 +27,19 @@ if (process.env.CANTOR_PASSWORD) {
     title: 'Cantor-Gymnasium',
     url: 'https://schueler:' + process.env.CANTOR_PASSWORD + '@stundenplan24.de/20072021/mobil/mobdaten/',
     timezone: 'Europe/Berlin',
-    locale: 'de'
+    locale: 'de',
+    requestedPassword: null
+  })
+}
+
+if (process.env.WGG_DESSAU_PASSWORD) {
+  schools.push({
+    id: 'wgg-dessau',
+    classNameField: 'class',
+    title: 'Walter Gropius-Gymnasium Dessau',
+    url: 'https://schueler:' + process.env.WGG_DESSAU_PASSWORD + '@stundenplan24.de/20053081/mobil/mobdaten/',
+    timezone: 'Europe/Berlin',
+    locale: 'de',
+    requestedPassword: process.env.WGG_DESSAU_PASSWORD
   })
 }

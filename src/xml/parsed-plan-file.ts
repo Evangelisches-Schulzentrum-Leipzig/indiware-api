@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,6 +22,7 @@ export interface ParsedPlanFile {
   freeDays: Array<string> // YYYY-MM-DD
   classes: Array<{
     title: string
+    sortTitle: string
     subjects: Array<{
       id: number
       subject: string

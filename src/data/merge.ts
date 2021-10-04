@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2021 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -31,7 +31,20 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
 
   let classes: Array<string> = []
   files.forEach((item) => classes = [...classes, ...item.classes.map((item) => item.title)])
-  classes = sortBy(uniq(classes))
+
+  classes = sortBy(uniq(classes), (className) => {
+    let result = className
+
+    for (let item of files) {
+      for (let classItem of item.classes) {
+        if (classItem.title === className) {
+          result = classItem.sortTitle
+        }
+      }
+    }
+
+    return result
+  })
 
   const plans = files.map((file) => {
     const { date, lastModified } = file

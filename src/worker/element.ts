@@ -18,20 +18,16 @@
 
 import * as auth from 'basic-auth'
 import { Request, Response, Router } from 'express'
-import { flatten } from 'lodash'
 import { SchoolConfiguration } from '../config'
 import { PlanData } from '../data'
 import { query } from '../query'
 import { sleep } from '../util/sleep'
-
-function urlSafeClassName (input: string) {
-  return input.split('/').join('-')
-}
+import { buildServableContent, ServableContent } from './servable-content'
 
 export class SchoolWorker {
   readonly config: SchoolConfiguration
-  lastPromise: Promise<PlanData>
-  lastSuccessPromise: Promise<PlanData>
+  lastPromise: Promise<ServableContent>
+  lastSuccessPromise: Promise<ServableContent>
 
   constructor (config: SchoolConfiguration) {
     this.config = config
@@ -41,7 +37,7 @@ export class SchoolWorker {
         url: config.url,
         locale: config.locale,
         timezone: config.timezone
-      })
+      }).then((data) => this.buildServableContent(data))
     ))
 
     firstPromise.catch((ex) => { console.warn('initial query failed for ' + config.id, ex) })
@@ -72,8 +68,10 @@ export class SchoolWorker {
           timezone: this.config.timezone
         })
 
-        this.lastPromise = Promise.resolve(newResponse)
-        this.lastSuccessPromise = Promise.resolve(newResponse)
+        const newContent = this.buildServableContent(newResponse)
+
+        this.lastPromise = Promise.resolve(newContent)
+        this.lastSuccessPromise = Promise.resolve(newContent)
       } catch (ex) {
         console.warn('crawling failed', ex)
 
@@ -85,22 +83,16 @@ export class SchoolWorker {
     }
   }
 
+  private buildServableContent (data: PlanData) {
+    return buildServableContent({
+      data,
+      requestedPassword: this.config.requestedPassword,
+      classNameField: this.config.classNameField
+    })
+  }
+
   createRouter (): Router {
     const router = Router()
-
-    const passwordConfigItems = this.config.requestedPassword === null ? [] : [
-      {
-        param: 'password',
-        type: 'password',
-        visibilityConditionId: '_true',
-        value: '',
-        label: 'Passwort'
-      }
-    ]
-
-    const passwordParamContentBucketBase = this.config.requestedPassword === null ? {} : {
-      passwordParam: 'password'
-    }
 
     const isAuthValid = (req: Request, res: Response) => {
       if (this.config.requestedPassword !== null) {
@@ -118,121 +110,49 @@ export class SchoolWorker {
 
     router.get('/config/default', (_, res, next) => {
       this.lastSuccessPromise.then((data) => {
-        const classListConfigItems = data.classes.map((className) => ({
-          param: this.config.classNameField,
-          type: 'radio',
-          value: className,
-          label: className,
-          visibilityConditionId: '_true'
-        }))
-
-        const config = [...passwordConfigItems, ...classListConfigItems]
-
-        res.json({
-          config,
-          configValidationConditionId: 'hasClassSelection',
-          contentBucketSets: [
-            ...data.classes.map((className) => ({
-              ...passwordParamContentBucketBase,
-              id: urlSafeClassName(className),
-              usageConditionId: 'isClassSelected-' + className,
-              type: 'plan'
-            })),
-            {
-              ...passwordParamContentBucketBase,
-              id: 'default',
-              usageConditionId: '_true',
-              type: 'content'
-            }
-          ],
-          conditionSets: [
-            ...data.classes.map((className) => ({
-              id: 'isClassSelected-' + className,
-              type: 'paramIs',
-              left: this.config.classNameField,
-              right: className
-            })),
-            ...data.classes.map((className, index) => ({
-              id: index === 0 ? 'hasClassSelection' : ('hasClassSelection' + index),
-              type: 'or',
-              left: 'isClassSelected-' + className,
-              right: index < data.classes.length - 1 ? ('hasClassSelection' + (index + 1)) : '_false'
-            }))
-          ]
-        })
+        res.json(data.configs.get('default'))
       }).catch((ex) => next(ex))
     })
 
-    router.get('/plan/:planid', (req, res, next) => {
+    router.get('/config/:name', (req, res, next) => {
       if (!isAuthValid(req, res)) return
 
-      const planId: string = req.params.planid
-
       this.lastSuccessPromise.then((data) => {
-        const className = data.classes.find((item) => urlSafeClassName(item) === planId)
+        const config = data.configs.get(req.params.name)
 
-        if (!className) {
+        if (config === undefined) {
           res.sendStatus(404)
-          return
+        } else {
+          res.json(config)
         }
-
-        const items: Array<{
-          date: string
-          class: string
-          lesson: number
-          subject: string | null
-          subjectChanged: boolean
-          teacher: string | null
-          teacherChanged: boolean
-          room: string | null
-          roomChanged: boolean
-          info: string | null
-        }> = []
-
-        data.plans.forEach((planDay) => {
-          const planClass = planDay.classes.find((planClass) => planClass.title === className)
-
-          if (planClass) {
-            planClass.plan.forEach((item) => {
-              items.push({
-                date: planDay.date,
-                class: className,
-                lesson: item.lesson,
-                subject: item.subject,
-                subjectChanged: item.subjectChanged,
-                teacher: item.teacher,
-                teacherChanged: item.teacherChanged,
-                room: item.room,
-                roomChanged: item.roomChanged,
-                info: item.info
-              })
-            })
-          }
-        })
-
-        res.json({
-          items
-        })
       }).catch((ex) => next(ex))
     })
 
-    router.get('/content/default', (req, res, next) => {
+    router.get('/content/:name', (req, res, next) => {
       if (!isAuthValid(req, res)) return
 
       this.lastSuccessPromise.then((data) => {
-        res.json({
-          file: [],
-          message: flatten(
-            data.plans.map((plan) => (
-              plan.messages.map((message, index) => ({
-                id: plan.date + '-' + index,
-                title: plan.date,
-                content: message,
-                notify: false
-              }))
-            ))
-          )
-        })
+        const config = data.contents.get(req.params.name)
+
+        if (config === undefined) {
+          res.sendStatus(404)
+        } else {
+          res.json(config)
+        }
+      }).catch((ex) => next(ex))
+    })
+
+    router.get('/plan/:name', (req, res, next) => {
+      if (!isAuthValid(req, res)) return
+
+      this.lastSuccessPromise.then((data) => {
+        const config = data.plans.get(req.params.name)
+
+        if (config === undefined) {
+          res.sendStatus(404)
+        } else {
+          res.json(config)
+        }
       }).catch((ex) => next(ex))
     })
 

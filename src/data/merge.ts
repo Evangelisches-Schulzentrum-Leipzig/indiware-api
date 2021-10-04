@@ -29,16 +29,31 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   files.forEach((item) => freeDays = [...freeDays, ...item.freeDays])
   freeDays = sortBy(uniq(freeDays))
 
-  let classes: Array<string> = []
-  files.forEach((item) => classes = [...classes, ...item.classes.map((item) => item.title)])
+  let classes: Array<{
+    name: string
+    courses: Array<{
+      name: string
+      teacher: string
+    }>
+  }> = []
 
-  classes = sortBy(uniq(classes), (className) => {
-    let result = className
+  files.forEach((item) => classes = [
+    ...classes,
+    ...item.classes.map((item) => ({
+      name: item.title,
+      courses: item.courses
+    }))
+  ])
+
+  classes = uniqBy(classes, (item) => item.name)
+
+  classes = sortBy(classes, (classItem) => {
+    let result = classItem.name
 
     for (let item of files) {
-      for (let classItem of item.classes) {
-        if (classItem.title === className) {
-          result = classItem.sortTitle
+      for (let classItem2 of item.classes) {
+        if (classItem2.title === classItem.name) {
+          result = classItem2.sortTitle
         }
       }
     }
@@ -49,8 +64,8 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   const plans = files.map((file) => {
     const { date, lastModified } = file
 
-    const classPlans = classes.map((className) => {
-      const dayClassData = file.classes.find((item) => item.title === className)
+    const classPlans = classes.map((classItem) => {
+      const dayClassData = file.classes.find((item) => item.title === classItem.name)
       const plan = (dayClassData ? dayClassData.plan : []).map((item) => ({
         lesson: item.lesson,
         subject: item.subject,
@@ -59,11 +74,12 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
         teacherChanged: item.teacherChanged,
         room: item.room,
         roomChanged: item.roomChanged,
-        info: item.info
+        info: item.info,
+        course: item.course
       }))
 
       return {
-        title: className,
+        title: classItem.name,
         plan
       }
     })

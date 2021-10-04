@@ -47,7 +47,16 @@ export interface XmlFileSchema {
     Klassen: [{
       Kl: Array<{
         Kurz: [XmlTextElement]        // class name
-        Kurse: [{/* note: there was no case yet where this was set */}]
+        Kurse: [{
+          Ku?: Array<{
+            KKz: [{
+              _attributes: {
+                KLe: string         // teacher name
+              },
+              _text: [string]       // actual course name
+            }]
+          }>
+        }]
         Hash?: [{/* note: there was no case yet where this was set */}]
         Unterricht: [{
           Ue?: Array<{
@@ -90,7 +99,7 @@ export interface XmlFileSchema {
             // unused, refers to the time of day as string
             Beginn?: [XmlTextElement]
             Ende?: [XmlTextElement]
-            // course, seems to be equal to Fa, unused
+            // course, seems to be equal to Fa if it is provided
             Ku2?: [XmlTextElement]
           }>
         }]

@@ -28,6 +28,10 @@ export interface ParsedPlanFile {
       subject: string
       teacher: string
     }>
+    courses: Array<{
+      name: string
+      teacher: string
+    }>
     plan: Array<{
       lesson: number
       subject: string | null
@@ -38,6 +42,7 @@ export interface ParsedPlanFile {
       roomChanged: boolean
       subjectId: number | null
       info: string | null
+      course: string | null
     }>
   }>
   messages: Array<string>

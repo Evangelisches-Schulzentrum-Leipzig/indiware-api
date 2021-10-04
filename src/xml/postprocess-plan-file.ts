@@ -91,6 +91,17 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
 
     const subjectIds = subjects.map((item) => item.id)
 
+    const courses = (classInput.Kurse?.[0]?.Ku || []).map((courseInput) => {
+      const name = courseInput.KKz[0]._text[0]
+      const teacher = courseInput.KKz[0]._attributes.KLe
+
+      return { name, teacher }
+    })
+
+    if (courses.length !== uniqBy(courses, (item) => item.name).length) {
+      throw new Error('duplicate course names')
+    }
+
     const plan = (classInput.Pl[0].Std || []).map((lessonInput) => {
       const lesson = parseNumberField(lessonInput.St[0]._text[0], 'lesson')
       const subject = sanitizeEmptyValues(readOptionalTextElement(lessonInput.Fa[0]))
@@ -101,9 +112,14 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
       const roomChanged = hasAttributes(lessonInput.Ra[0])
       const subjectId = lessonInput.Nr ? parseNumberField(lessonInput.Nr[0]._text[0], 'subject id') : null
       const info = readOptionalTextElement(lessonInput.If[0])
+      const course = lessonInput.Ku2 ? readOptionalTextElement(lessonInput.Ku2[0]) : null
 
       if (subjectId !== null && subjectIds.indexOf(subjectId) === -1) {
         throw new Error('invalid subject id: ' + subjectId)
+      }
+
+      if (course !== null && !courses.some((item) => item.name === course)) {
+        throw new Error('invalid course: ' + course)
       }
 
       return {
@@ -115,13 +131,15 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
         room,
         roomChanged,
         subjectId,
-        info
+        info,
+        course
       }
     })
 
     return {
       title,
       subjects,
+      courses,
       plan
     }
   })

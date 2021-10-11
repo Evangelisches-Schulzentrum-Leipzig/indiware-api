@@ -29,37 +29,59 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   files.forEach((item) => freeDays = [...freeDays, ...item.freeDays])
   freeDays = sortBy(uniq(freeDays))
 
+  let classesTemp = new Map<string, {
+    courses: Map<string, { teacher: string }>
+    sortTitle: string
+  }>()
+
+  files.forEach((filesItem) => {
+    filesItem.classes.forEach((newClassItem) => {
+      const existingItem = classesTemp.get(newClassItem.title)
+      let courses: Map<string, { teacher: string }>
+
+      if (existingItem) {
+        courses = existingItem.courses
+      } else {
+        courses = new Map<string, { teacher: string }>()
+
+        classesTemp.set(newClassItem.title, {
+          courses,
+          sortTitle: newClassItem.sortTitle
+        })
+      }
+
+      newClassItem.courses.forEach((course) => courses.set(course.name, { teacher: course.teacher }))
+    })
+  })
+
   let classes: Array<{
     name: string
     courses: Array<{
       name: string
       teacher: string
     }>
+    sortTitle: string
   }> = []
 
-  files.forEach((item) => classes = [
-    ...classes,
-    ...item.classes.map((item) => ({
-      name: item.title,
-      courses: item.courses
+  classesTemp.forEach(({ courses, sortTitle }, name) => {
+    let coursesNew: Array<{
+      name: string
+      teacher: string
+    }> = []
+
+    courses.forEach(({ teacher }, name) => coursesNew.push({
+      name,
+      teacher
     }))
-  ])
 
-  classes = uniqBy(classes, (item) => item.name)
-
-  classes = sortBy(classes, (classItem) => {
-    let result = classItem.name
-
-    for (let item of files) {
-      for (let classItem2 of item.classes) {
-        if (classItem2.title === classItem.name) {
-          result = classItem2.sortTitle
-        }
-      }
-    }
-
-    return result
+    classes.push({
+      name,
+      courses: sortBy(coursesNew, (course) => course.name),
+      sortTitle
+    })
   })
+
+  classes = sortBy(classes, (classItem) => classItem.sortTitle)
 
   const plans = files.map((file) => {
     const { date, lastModified } = file
@@ -94,7 +116,10 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
 
   return {
     freeDays,
-    classes,
+    classes: classes.map((item) => ({
+      name: item.name,
+      courses: item.courses
+    })),
     plans
   }
 }

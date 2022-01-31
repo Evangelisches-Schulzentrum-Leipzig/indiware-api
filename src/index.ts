@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as express from 'express'
-import { createSchoolWorkers } from './worker'
+import express from 'express'
+import { createSchoolWorkers } from './worker/index.js'
 
 const app = express()
 const workers = createSchoolWorkers()

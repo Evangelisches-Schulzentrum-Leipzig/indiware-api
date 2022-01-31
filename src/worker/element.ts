@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,10 +19,10 @@
 import * as auth from 'basic-auth'
 import { Request, Response, Router } from 'express'
 import { SchoolConfiguration } from '../config'
-import { PlanData } from '../data'
-import { query } from '../query'
-import { sleep } from '../util/sleep'
-import { buildServableContent, ServableContent } from './servable-content'
+import { PlanData } from '../data/index.js'
+import { query } from '../query/index.js'
+import { sleep } from '../util/sleep.js'
+import { buildServableContent, ServableContent } from './servable-content.js'
 
 export class SchoolWorker {
   readonly config: SchoolConfiguration
@@ -35,6 +35,8 @@ export class SchoolWorker {
     const firstPromise = sleep(Math.random() * 1000 * 10 /* wait up to 10 seconds */).then(() => (
       query({
         url: config.url,
+        username: config.username,
+        password: config.password,
         locale: config.locale,
         timezone: config.timezone
       }).then((data) => this.buildServableContent(data))
@@ -64,6 +66,8 @@ export class SchoolWorker {
       try {
         const newResponse = await query({
           url: this.config.url,
+          username: this.config.username,
+          password: this.config.password,
           locale: this.config.locale,
           timezone: this.config.timezone
         })

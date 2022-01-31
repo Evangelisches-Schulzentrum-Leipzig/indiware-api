@@ -16,14 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { max, uniq, uniqBy } from 'lodash'
-import * as moment from 'moment-timezone'
-import { ParsedPlanFile } from './parsed-plan-file'
+import lodash from 'lodash'
+import moment from 'moment-timezone'
+import { ParsedPlanFile } from './parsed-plan-file.js'
 import {
   hasAttributes, parseNumberField,
   readOptionalTextElement, sanitizeEmptyValues
-} from './postprocess-utils'
-import { XmlFileSchema } from './xmlschema'
+} from './postprocess-utils.js'
+import { XmlFileSchema } from './xmlschema.js'
+
+const { max, uniq, uniqBy } = lodash
 
 const classNameRegex = /^[0-9/ a-z]*$/
 const classicClassNameRegex = /^[0-9]* [a-z]*$/

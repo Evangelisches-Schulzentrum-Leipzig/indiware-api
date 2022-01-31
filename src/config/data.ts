@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SchoolConfiguration } from './item'
+import { SchoolConfiguration } from './item.js'
 
 export const schools: Array<SchoolConfiguration> = []
 
@@ -25,7 +25,9 @@ if (process.env.CANTOR_PASSWORD) {
     id: 'cantor',
     classNameField: 'class',
     title: 'Cantor-Gymnasium',
-    url: 'https://schueler:' + process.env.CANTOR_PASSWORD + '@stundenplan24.de/20072021/mobil/mobdaten/',
+    url: 'https://stundenplan24.de/20072021/mobil/mobdaten/',
+    username: 'schueler',
+    password: process.env.CANTOR_PASSWORD,
     timezone: 'Europe/Berlin',
     locale: 'de',
     requestedPassword: null
@@ -37,7 +39,9 @@ if (process.env.WGG_DESSAU_PASSWORD) {
     id: 'wgg-dessau',
     classNameField: 'class',
     title: 'Walter Gropius-Gymnasium Dessau',
-    url: 'https://schueler:' + process.env.WGG_DESSAU_PASSWORD + '@stundenplan24.de/20053081/mobil/mobdaten/',
+    url: 'https://stundenplan24.de/20053081/mobil/mobdaten/',
+    username: 'schueler',
+    password: process.env.WGG_DESSAU_PASSWORD,
     timezone: 'Europe/Berlin',
     locale: 'de',
     requestedPassword: process.env.WGG_DESSAU_PASSWORD

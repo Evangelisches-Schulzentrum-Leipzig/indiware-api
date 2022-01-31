@@ -16,8 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { flatten } from 'lodash'
-import { PlanData } from '../data'
+import lodash from 'lodash'
+import { PlanData } from '../data/index.js'
+
+const { flatten } = lodash
 
 interface PlanItem {
   date: string

@@ -16,7 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Ajv from 'ajv'
+import Ajv from 'ajv'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import { fileURLToPath } from 'url'
+
 const ajv = new Ajv()
 
 export interface XmlTextElement {
@@ -134,7 +138,9 @@ export interface XmlFileSchema {
   }]
 }
 
+const schema = JSON.parse(readFileSync(resolve(fileURLToPath(import.meta.url), '../xmljsonschema.json')).toString('utf8'))
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-export const matchesXmlFileSchema = ajv.compile(require('./xmljsonschema.json')) as ((input: unknown) => input is XmlFileSchema) & {
+export const matchesXmlFileSchema = ajv.compile(schema) as ((input: unknown) => input is XmlFileSchema) & {
   errors: unknown
 }

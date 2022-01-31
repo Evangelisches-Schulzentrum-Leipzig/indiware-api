@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { schools } from '../config'
-import { SchoolWorker } from './element'
+import { schools } from '../config/index.js'
+import { SchoolWorker } from './element.js'
 
 export function createSchoolWorkers () {
   return schools.map((item) => new SchoolWorker(item))

@@ -16,9 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { sortBy, uniq, uniqBy } from 'lodash'
-import { ParsedPlanFile } from '../xml'
-import { PlanData } from './schema'
+import lodash from 'lodash'
+import { ParsedPlanFile } from '../xml/index.js'
+import { PlanData } from './schema.js'
+
+const { sortBy, uniq, uniqBy } = lodash
 
 export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   if (files.length !== uniqBy(files, (item) => item.date).length) {

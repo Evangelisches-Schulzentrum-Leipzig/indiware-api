@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
     "outDir": "./build",
-    "target": "es2017",
+    "target": "es2015",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "module": "commonjs",
+    "moduleResolution": "node",
+    "module": "es2020",
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
-    "allowJs": true
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "./src/**/*"

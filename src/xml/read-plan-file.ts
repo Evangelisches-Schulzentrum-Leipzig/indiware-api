@@ -17,7 +17,7 @@
  */
 
 import { xml2js } from 'xml-js'
-import { matchesXmlFileSchema, XmlFileSchema } from './xmlschema'
+import { matchesXmlFileSchema, XmlFileSchema } from './xmlschema.js'
 
 export const readAndPrevalidateXml = (sourceData: string): XmlFileSchema => {
   const parsed: unknown = xml2js(sourceData, {

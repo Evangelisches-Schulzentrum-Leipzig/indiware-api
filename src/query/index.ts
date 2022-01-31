@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,23 +16,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { without } from 'lodash'
-import * as moment from 'moment-timezone'
-import * as request from 'request-promise-native'
-import { mergePlanFiles, PlanData } from '../data'
-import { ParsedPlanFile, parsePlanFile } from '../xml'
+import lodash from 'lodash'
+import moment, { Moment } from 'moment-timezone'
+import fetch from 'node-fetch'
+import { mergePlanFiles, PlanData } from '../data/index.js'
+import { ParsedPlanFile, parsePlanFile } from '../xml/index.js'
 
-export async function query ({ url, timezone, locale }: {
+const { without } = lodash
+
+export async function query ({ url, username, password, timezone, locale }: {
   url: string
+  username: string
+  password: string
   timezone: string
   locale: string
 }): Promise<PlanData> {
   const time = moment()
-  const dates: Array<moment.Moment> = []
+  const dates: Array<Moment> = []
 
   for (let i = 0; i < 7; i++) {
     dates.push(time.clone())
     time.add(1, 'day')
+  }
+
+  const headers = {
+    'Authorization': 'Basic ' + Buffer.from(username + ':' + password, 'utf8').toString('base64')
   }
 
   const dataByDate: Array<ParsedPlanFile | null> = await Promise.all(dates.map(async (date) => {
@@ -40,24 +48,20 @@ export async function query ({ url, timezone, locale }: {
     const expectedDate = date.format('YYYY-MM-DD')
 
     const planUrl = url + 'PlanKl' + dateForUrl + '.xml'
-    const planContent: request.FullResponse = await request({
-      uri: planUrl,
-      simple: false,
-      resolveWithFullResponse: true
-    })
+    const planContent = await fetch(planUrl, { headers })
 
-    if ((planContent.statusCode === 300) || (planContent.statusCode === 404) || (planContent.statusCode === 503)) {
+    if ((planContent.status === 300) || (planContent.status === 404) || (planContent.status === 503)) {
       // ignore this date, there is no plan for it
 
       return null
     }
 
-    if (planContent.statusCode !== 200) {
-      throw new Error('failed to query ' + planUrl + ' - ' + planContent.statusCode)
+    if (planContent.status !== 200) {
+      throw new Error('failed to query ' + planUrl + ' - ' + planContent.status)
     }
 
     const parsedPlanFile = parsePlanFile({
-      input: planContent.body,
+      input: await planContent.text(),
       timezone,
       locale
     })
@@ -73,22 +77,18 @@ export async function query ({ url, timezone, locale }: {
 
   if (data.length === 0) {
     const planUrl = url + 'Klassen.xml'
-    const planContent: request.FullResponse = await request({
-      uri: planUrl,
-      simple: false,
-      resolveWithFullResponse: true
-    })
+    const planContent = await fetch(planUrl, { headers })
 
-    if ((planContent.statusCode === 300) || (planContent.statusCode === 404)) {
+    if ((planContent.status === 300) || (planContent.status === 404)) {
       throw new Error('no fallback plan found')
     }
 
-    if (planContent.statusCode !== 200) {
-      throw new Error('failed to query ' + planUrl + ' - ' + planContent.statusCode)
+    if (planContent.status !== 200) {
+      throw new Error('failed to query ' + planUrl + ' - ' + planContent.status)
     }
 
     const parsedPlanFile = parsePlanFile({
-      input: planContent.body,
+      input: await planContent.text(),
       timezone,
       locale
     })

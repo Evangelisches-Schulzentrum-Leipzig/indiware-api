@@ -6,8 +6,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.26",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
+    "node-fetch": "^3.2.0",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
@@ -29,5 +28,6 @@
     "build:schema": "typescript-json-schema --noExtraProps --required --strictNullChecks -o ./build/xml/xmljsonschema.json ./src/xml/xmlschema.ts XmlFileSchema",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "start": "node build"
-  }
+  },
+  "type": "module"
 }

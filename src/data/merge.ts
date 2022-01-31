@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   files.forEach((item) => freeDays = [...freeDays, ...item.freeDays])
   freeDays = sortBy(uniq(freeDays))
 
-  let classesTemp = new Map<string, {
+  const classesTemp = new Map<string, {
     courses: Map<string, { teacher: string }>
     sortTitle: string
   }>()
@@ -64,7 +64,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   }> = []
 
   classesTemp.forEach(({ courses, sortTitle }, name) => {
-    let coursesNew: Array<{
+    const coursesNew: Array<{
       name: string
       teacher: string
     }> = []

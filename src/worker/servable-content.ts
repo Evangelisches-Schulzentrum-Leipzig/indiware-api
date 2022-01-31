@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -108,6 +108,8 @@ export function buildServableContent ({ data, requestedPassword, classNameField 
         if (item.course === null) {
           itemsBase.push(preparedItem)
         } else {
+          // it is a bug if the item is not in the map
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           itemsPerCourse.get(item.course)!.push(preparedItem)
         }
       })
@@ -118,6 +120,8 @@ export function buildServableContent ({ data, requestedPassword, classNameField 
 
     classItem.courses.forEach((courseItem, courseIndex) => plans.set(
       contentSets.course[classIndex][courseIndex],
+      // it is a bug if the item is not in the map
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       { items: itemsPerCourse.get(courseItem.name)! }
     ))
   })

@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,8 +19,8 @@
 import { xml2js } from 'xml-js'
 import { matchesXmlFileSchema, XmlFileSchema } from './xmlschema'
 
-export const readAndPrevalidateXml = (sourceData: string) => {
-  const parsed: any = xml2js(sourceData, {
+export const readAndPrevalidateXml = (sourceData: string): XmlFileSchema => {
+  const parsed: unknown = xml2js(sourceData, {
     compact: true,
     alwaysArray: true
   })
@@ -29,5 +29,5 @@ export const readAndPrevalidateXml = (sourceData: string) => {
     throw new Error('source data does not match to the expected schema: ' + JSON.stringify(matchesXmlFileSchema.errors))
   }
 
-  return parsed as XmlFileSchema
+  return parsed
 }

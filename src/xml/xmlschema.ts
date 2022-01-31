@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,8 @@ export interface XmlTextElement {
   _text: [string]
 }
 
+type Empty = Record<string, never>
+
 export interface XmlFileSchema {
   _declaration: {
     _attributes: {
@@ -39,7 +41,7 @@ export interface XmlFileSchema {
       nativ: [XmlTextElement]
       woche?: [XmlTextElement]
       tageprowoche?: [XmlTextElement]
-      schulnummer?: [{}]
+      schulnummer?: [Empty]
     }]
     FreieTage: [{
       ft: Array<XmlTextElement>     // 190801 - YYMMDD
@@ -79,23 +81,23 @@ export interface XmlFileSchema {
               _attributes: {
                 FaAe: 'FaGeaendert'
               }
-            } | {}]  // subject
+            } | Empty]  // subject
             Le: [XmlTextElement | {
               // the '&nbsp;' says that something was removed
               _text?: ['&nbsp;' | string]
               _attributes: {
                 LeAe: 'LeGeaendert'
               }
-            } | {}]  // teacher
+            } | Empty]  // teacher
             Ra: [XmlTextElement | {
               // the '&nbsp;' says that something was removed
               _text?: ['&nbsp;' | string]
               _attributes: {
                 RaAe: 'RaGeaendert'
               }
-            } | {}]  // room
+            } | Empty]  // room
             Nr?: [XmlTextElement]  // refers to the UE items
-            If: [{} | XmlTextElement] // if it is a text, then the text describes a change
+            If: [Empty | XmlTextElement] // if it is a text, then the text describes a change
             // unused, refers to the time of day as string
             Beginn?: [XmlTextElement]
             Ende?: [XmlTextElement]
@@ -111,7 +113,7 @@ export interface XmlFileSchema {
             KlStunde: [XmlTextElement]
             KlBeginn: [XmlTextElement]
             KlDauer: [XmlTextElement]
-            KlKinfo: [{} | XmlTextElement]
+            KlKinfo: [Empty | XmlTextElement]
           }>
         }]
         // this is unused
@@ -127,9 +129,12 @@ export interface XmlFileSchema {
       }>
     }]
     ZusatzInfo?: [{
-      ZiZeile: Array<[XmlTextElement] | {}>
+      ZiZeile: Array<XmlTextElement | Empty>
     }]
   }]
 }
 
-export const matchesXmlFileSchema = ajv.compile(require('./xmljsonschema.json')) as any
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+export const matchesXmlFileSchema = ajv.compile(require('./xmljsonschema.json')) as ((input: unknown) => input is XmlFileSchema) & {
+  errors: unknown
+}

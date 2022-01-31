@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -46,12 +46,12 @@ export function hasAttributes (input: {
 } | {
   // empty object
 }) {
-  return typeof (input as any)._attributes !== 'undefined'
+  return '_attributes' in input && typeof input._attributes !== 'undefined'
 }
 
-export function readOptionalTextElement (input: {} | {_text: [string]}): string | null {
-  if (typeof (input as any)._text === 'object' && typeof (input as any)._text[0] === 'string') {
-    return (input as any)._text[0]
+export function readOptionalTextElement (input: {_text?: [string]}): string | null {
+  if (typeof input._text === 'object' && typeof input._text[0] === 'string') {
+    return input._text[0]
   } else {
     return null
   }

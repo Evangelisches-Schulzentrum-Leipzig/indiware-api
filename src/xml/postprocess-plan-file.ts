@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -66,7 +66,7 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
   const messages = input.VpMobil[0].ZusatzInfo ?
     input.VpMobil[0].ZusatzInfo[0].ZiZeile.map((message) => readOptionalTextElement(message)).filter((item) => !!item) as Array<string> : []
 
-  let classes = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
+  const classes = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
     const title = classInput.Kurz[0]._text[0]
 
     if (!classNameRegex.test(title)) {

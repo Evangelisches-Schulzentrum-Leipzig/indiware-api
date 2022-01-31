@@ -16,19 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { xml2js } from 'xml-js'
-import { XmlFileSchema } from './xmlschema.js'
-import { matchesXmlFileSchema } from './validator.js'
+import Ajv from 'ajv'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import { fileURLToPath } from 'url'
+import { XmlFileSchema } from './xmlschema'
 
-export const readAndPrevalidateXml = (sourceData: string): XmlFileSchema => {
-  const parsed: unknown = xml2js(sourceData, {
-    compact: true,
-    alwaysArray: true
-  })
+const ajv = new Ajv()
 
-  if (!matchesXmlFileSchema(parsed)) {
-    throw new Error('source data does not match to the expected schema: ' + JSON.stringify(matchesXmlFileSchema.errors))
-  }
+const schema = JSON.parse(readFileSync(resolve(fileURLToPath(import.meta.url), '../xmljsonschema.json')).toString('utf8'))
 
-  return parsed
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+export const matchesXmlFileSchema = ajv.compile(schema) as ((input: unknown) => input is XmlFileSchema) & {
+  errors: unknown
 }

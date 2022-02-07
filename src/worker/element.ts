@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as auth from 'basic-auth'
+import auth from 'basic-auth'
 import { Request, Response, Router } from 'express'
 import { SchoolConfiguration } from '../config'
 import { PlanData } from '../data/index.js'

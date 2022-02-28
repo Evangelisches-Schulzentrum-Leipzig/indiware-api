@@ -24,12 +24,13 @@ import { ParsedPlanFile, parsePlanFile } from '../xml/index.js'
 
 const { without } = lodash
 
-export async function query ({ url, username, password, timezone, locale }: {
+export async function query ({ url, username, password, timezone, locale, signal }: {
   url: string
   username: string
   password: string
   timezone: string
   locale: string
+  signal: AbortSignal
 }): Promise<PlanData> {
   const time = moment()
   const dates: Array<Moment> = []
@@ -48,7 +49,7 @@ export async function query ({ url, username, password, timezone, locale }: {
     const expectedDate = date.format('YYYY-MM-DD')
 
     const planUrl = url + 'PlanKl' + dateForUrl + '.xml'
-    const planContent = await fetch(planUrl, { headers })
+    const planContent = await fetch(planUrl, { headers, signal })
 
     if ((planContent.status === 300) || (planContent.status === 404) || (planContent.status === 503)) {
       // ignore this date, there is no plan for it
@@ -77,7 +78,7 @@ export async function query ({ url, username, password, timezone, locale }: {
 
   if (data.length === 0) {
     const planUrl = url + 'Klassen.xml'
-    const planContent = await fetch(planUrl, { headers })
+    const planContent = await fetch(planUrl, { headers, signal })
 
     if ((planContent.status === 300) || (planContent.status === 404)) {
       throw new Error('no fallback plan found')

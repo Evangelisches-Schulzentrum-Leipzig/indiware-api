@@ -18,6 +18,7 @@
 
 import auth from 'basic-auth'
 import { Request, Response, Router } from 'express'
+import timeoutSignal from 'timeout-signal'
 import { SchoolConfiguration } from '../config'
 import { PlanData } from '../data/index.js'
 import { query } from '../query/index.js'
@@ -32,15 +33,7 @@ export class SchoolWorker {
   constructor (config: SchoolConfiguration) {
     this.config = config
 
-    const firstPromise = sleep(Math.random() * 1000 * 10 /* wait up to 10 seconds */).then(() => (
-      query({
-        url: config.url,
-        username: config.username,
-        password: config.password,
-        locale: config.locale,
-        timezone: config.timezone
-      }).then((data) => this.buildServableContent(data))
-    ))
+    const firstPromise = sleep(Math.random() * 1000 * 10 /* wait up to 10 seconds */).then(() => this.doQuery())
 
     firstPromise.catch((ex) => { console.warn('initial query failed for ' + config.id, ex) })
 
@@ -64,15 +57,7 @@ export class SchoolWorker {
       await sleep(1000 * 60 * 5 /* 5 minutes */)
 
       try {
-        const newResponse = await query({
-          url: this.config.url,
-          username: this.config.username,
-          password: this.config.password,
-          locale: this.config.locale,
-          timezone: this.config.timezone
-        })
-
-        const newContent = this.buildServableContent(newResponse)
+        const newContent = await this.doQuery()
 
         this.lastPromise = Promise.resolve(newContent)
         this.lastSuccessPromise = Promise.resolve(newContent)
@@ -85,6 +70,21 @@ export class SchoolWorker {
         this.lastPromise.catch(() => null)
       }
     }
+  }
+
+  private async doQuery() {
+    const newResponse = await query({
+      url: this.config.url,
+      username: this.config.username,
+      password: this.config.password,
+      locale: this.config.locale,
+      timezone: this.config.timezone,
+      signal: timeoutSignal(1000 * 60 * 10)
+    })
+
+    const newContent = this.buildServableContent(newResponse)
+
+    return newContent
   }
 
   private buildServableContent (data: PlanData) {

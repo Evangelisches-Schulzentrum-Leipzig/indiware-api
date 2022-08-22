@@ -78,8 +78,8 @@ export interface XmlFileSchema {
             Nr?: [XmlTextElement]  // refers to the UE items
             If: [Empty | XmlTextElement] // if it is a text, then the text describes a change
             // unused, refers to the time of day as string
-            Beginn?: [XmlTextElement]
-            Ende?: [XmlTextElement]
+            Beginn?: [XmlTextElement | Empty]
+            Ende?: [XmlTextElement | Empty]
             // course, seems to be equal to Fa if it is provided
             Ku2?: [XmlTextElement]
           }>

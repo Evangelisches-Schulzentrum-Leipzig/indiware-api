@@ -16,19 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export interface SchoolConfiguration {
-  id: string
-  title: string
-  student: {
-    url: string
-    password: string
+export function addMapItem<V> (map: Map<string, V>, wishName: string, item: V): string {
+  wishName = wishName.toLowerCase()
+  wishName = wishName.replace(/[^a-z0-9_-]/g, '')
+
+  if (map.has(wishName)) {
+    let i = 2
+
+    while (map.has(wishName + '-' + i)) { i++ }
+
+    wishName = wishName + '-' + i
+
+    map.set(wishName, item)
+
+    return wishName
+  } else {
+    map.set(wishName, item)
+
+    return wishName
   }
-  legacy: boolean
-  teacher: {
-    url: string
-    password: string
-  } | null
-  locale: string
-  timezone: string
-  skipPasswordCheck: boolean
+}
+
+export function hex(input: string): string {
+  return Buffer.from(input, 'utf8').toString('hex')
 }

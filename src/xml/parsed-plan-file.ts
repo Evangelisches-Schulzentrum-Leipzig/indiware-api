@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,30 +20,51 @@ export interface ParsedPlanFile {
   date: string  // YYYY-MM-DD
   lastModified: number  // unix timestamp in milliseconds
   freeDays: Array<string> // YYYY-MM-DD
-  classes: Array<{
-    title: string
-    sortTitle: string
-    subjects: Array<{
-      id: number
-      subject: string
-      teacher: string
-    }>
-    courses: Array<{
-      name: string
-      teacher: string
-    }>
-    plan: Array<{
-      lesson: number
-      subject: string | null
-      subjectChanged: boolean
-      teacher: string | null
-      teacherChanged: boolean
-      room: string | null
-      roomChanged: boolean
-      subjectId: number | null
-      info: string | null
-      course: string | null
-    }>
-  }>
+  classes: Array<ParsedPlanFileClass>
   messages: Array<string>
 }
+
+export interface ParsedPlanFileClass {
+  title: string
+  sortTitle: string
+  subjects: Array<ParsedPlanFileSubject>
+  courses: Array<ParsedPlanFileCourse>
+  plan: Array<ParsedPlanFilePlan>
+  supervisions: Array<ParsedPlanFileSupervision>
+}
+
+export interface ParsedPlanFileSubject {
+  id: number
+  subject: string
+  teacher: string
+}
+
+export interface ParsedPlanFileCourse {
+  name: string
+  teacher: string
+}
+
+export interface ParsedPlanFilePlan {
+  lesson: number
+  subject: string | null
+  subjectChanged: boolean
+  teacher: string | null
+  teacherChanged: boolean
+  room: string | null
+  roomChanged: boolean
+  subjectId: number | null
+  info: string | null
+  course: string | null
+}
+
+export interface ParsedPlanFileSupervision {
+  type: ParsedPlanFileSupervisionType
+  prevLessonIndex: number
+  time1: string
+  time2: string
+  location: string
+  replacementFor: string | null
+  info: string | null
+}
+
+export type ParsedPlanFileSupervisionType = 'regular' | 'cancel' | 'substitute'

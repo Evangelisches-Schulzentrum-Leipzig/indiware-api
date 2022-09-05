@@ -23,27 +23,50 @@ export const schools: Array<SchoolConfiguration> = []
 if (process.env.CANTOR_PASSWORD) {
   schools.push({
     id: 'cantor',
-    classNameField: 'class',
     title: 'Cantor-Gymnasium',
-    url: 'https://stundenplan24.de/20072021/mobil/mobdaten/',
-    username: 'schueler',
-    password: process.env.CANTOR_PASSWORD,
+    student: {
+      url: 'https://stundenplan24.de/20072021/mobil/mobdaten/',
+      password: process.env.CANTOR_PASSWORD
+    },
+    legacy: true,
+    teacher: null,
     timezone: 'Europe/Berlin',
     locale: 'de',
-    requestedPassword: null
+    skipPasswordCheck: true
   })
 }
 
 if (process.env.WGG_DESSAU_PASSWORD) {
   schools.push({
     id: 'wgg-dessau',
-    classNameField: 'class',
     title: 'Walter Gropius-Gymnasium Dessau',
-    url: 'https://stundenplan24.de/20053081/mobil/mobdaten/',
-    username: 'schueler',
-    password: process.env.WGG_DESSAU_PASSWORD,
+    student: {
+      url: 'https://stundenplan24.de/20053081/mobil/mobdaten/',
+      password: process.env.WGG_DESSAU_PASSWORD
+    },
+    legacy: true,
+    teacher: null,
     timezone: 'Europe/Berlin',
     locale: 'de',
-    requestedPassword: process.env.WGG_DESSAU_PASSWORD
+    skipPasswordCheck: false
+  })
+}
+
+if (process.env.TVDS_STUD_PASSWORD) {
+  schools.push({
+    id: 'm-tvds',
+    title: 'Verbundene Regionale Schule und Gymnasium "Tisa von der Schulenburg" Dorf Mecklenburg',
+    student: {
+      url: 'https://stundenplan24.de/40092657/mobil/mobdaten/',
+      password: process.env.TVDS_STUD_PASSWORD
+    },
+    teacher: process.env.TVDS_TEACH_PASSWORD ? {
+      url: 'https://www.stundenplan24.de/40092657/moble/mobdaten/',
+      password: process.env.TVDS_TEACH_PASSWORD
+    } : null,
+    legacy: false,
+    timezone: 'Europe/Berlin',
+    locale: 'de',
+    skipPasswordCheck: false
   })
 }

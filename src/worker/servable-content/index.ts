@@ -16,19 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export interface SchoolConfiguration {
-  id: string
-  title: string
-  student: {
-    url: string
-    password: string
-  }
-  legacy: boolean
-  teacher: {
-    url: string
-    password: string
-  } | null
-  locale: string
-  timezone: string
-  skipPasswordCheck: boolean
-}
+export { buildServableContent } from './servable-content.js'
+export { ServableContent } from './types.js'

@@ -24,14 +24,19 @@ import { ParsedPlanFile, parsePlanFile } from '../xml/index.js'
 
 const { without } = lodash
 
-export async function query ({ url, username, password, timezone, locale, signal }: {
+type PlanType = 'student' | 'teacher'
+
+export async function query ({ url, username, password, timezone, locale, signal, type }: {
   url: string
   username: string
   password: string
   timezone: string
   locale: string
   signal: AbortSignal
+  type: PlanType
 }): Promise<PlanData> {
+  const skipClassNameValidation = type === 'teacher'
+
   const time = moment()
   const dates: Array<Moment> = []
 
@@ -48,7 +53,7 @@ export async function query ({ url, username, password, timezone, locale, signal
     const dateForUrl = date.format('YYYYMMDD')
     const expectedDate = date.format('YYYY-MM-DD')
 
-    const planUrl = url + 'PlanKl' + dateForUrl + '.xml'
+    const planUrl = url + 'Plan' + (type === 'student' ? 'Kl' : 'Le') + dateForUrl + '.xml'
     const planContent = await fetch(planUrl, { headers, signal })
 
     if ((planContent.status === 300) || (planContent.status === 404) || (planContent.status === 503)) {
@@ -64,7 +69,8 @@ export async function query ({ url, username, password, timezone, locale, signal
     const parsedPlanFile = parsePlanFile({
       input: await planContent.text(),
       timezone,
-      locale
+      locale,
+      skipClassNameValidation
     })
 
     if (parsedPlanFile.date !== expectedDate) {
@@ -77,7 +83,7 @@ export async function query ({ url, username, password, timezone, locale, signal
   const data = without(dataByDate, null) as Array<ParsedPlanFile>
 
   if (data.length === 0) {
-    const planUrl = url + 'Klassen.xml'
+    const planUrl = url + (type === 'student' ? 'Klassen' : 'Lehrer') + '.xml'
     const planContent = await fetch(planUrl, { headers, signal })
 
     if ((planContent.status === 300) || (planContent.status === 404)) {
@@ -91,7 +97,8 @@ export async function query ({ url, username, password, timezone, locale, signal
     const parsedPlanFile = parsePlanFile({
       input: await planContent.text(),
       timezone,
-      locale
+      locale,
+      skipClassNameValidation
     })
 
     return mergePlanFiles([ parsedPlanFile ])

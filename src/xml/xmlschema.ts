@@ -28,7 +28,7 @@ export interface XmlFileSchema {
     Klassen: [{
       Kl: Array<{
         Kurz: [XmlTextElement]        // class name
-        Kurse: [{
+        Kurse?: [{
           Ku?: Array<{
             KKz: [{
               _attributes: {
@@ -39,7 +39,7 @@ export interface XmlFileSchema {
           }>
         }]
         Hash?: [{/* note: there was no case yet where this was set */}]
-        Unterricht: [{
+        Unterricht?: [{
           Ue?: Array<{
             UeNr: [{
               _attributes: {
@@ -95,6 +95,22 @@ export interface XmlFileSchema {
             KlKinfo: [Empty | XmlTextElement]
           }>
         }]
+        Aufsichten?: [
+          Empty | {
+            Aufsicht: Array<{
+              _attributes?: {
+                AuAe: 'AuVertretung' | 'AuAusfall'
+              }
+              AuTag: [XmlTextElement]
+              AuVorStunde: [XmlTextElement]
+              AuUhrzeit: [XmlTextElement]
+              AuZeit: [XmlTextElement]
+              AuOrt: [XmlTextElement]
+              AuInfo?: [XmlTextElement]
+              AuFuer?: [XmlTextElement]
+            }>
+          }
+        ]
         // this is unused
         KlStunden?: [{
           KlSt: Array<{

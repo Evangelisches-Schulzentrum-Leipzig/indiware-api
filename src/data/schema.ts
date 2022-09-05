@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2021 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import { ParsedPlanFileSupervision } from '../xml/parsed-plan-file.js'
 
 export interface PlanData {
   freeDays: Array<string> // YYYY-MM-DD
@@ -41,7 +43,10 @@ export interface PlanData {
         info: string | null
         course: string | null
       }>
+      supervisions: Array<PlanSupervision>
     }>
     messages: Array<string>
   }>
 }
+
+export type PlanSupervision = ParsedPlanFileSupervision

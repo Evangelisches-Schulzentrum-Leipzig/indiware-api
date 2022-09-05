@@ -18,7 +18,7 @@
 
 import lodash from 'lodash'
 import { ParsedPlanFile } from '../xml/index.js'
-import { PlanData } from './schema.js'
+import { PlanData, PlanSupervision } from './schema.js'
 
 const { sortBy, uniq, uniqBy } = lodash
 
@@ -34,6 +34,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   const classesTemp = new Map<string, {
     courses: Map<string, { teacher: string }>
     sortTitle: string
+    supervisions: Array<PlanSupervision>
   }>()
 
   files.forEach((filesItem) => {
@@ -48,7 +49,8 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
 
         classesTemp.set(newClassItem.title, {
           courses,
-          sortTitle: newClassItem.sortTitle
+          sortTitle: newClassItem.sortTitle,
+          supervisions: newClassItem.supervisions
         })
       }
 
@@ -62,10 +64,11 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
       name: string
       teacher: string
     }>
+    supervisions: Array<PlanSupervision>
     sortTitle: string
   }> = []
 
-  classesTemp.forEach(({ courses, sortTitle }, name) => {
+  classesTemp.forEach(({ courses, sortTitle, supervisions }, name) => {
     const coursesNew: Array<{
       name: string
       teacher: string
@@ -79,6 +82,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
     classes.push({
       name,
       courses: sortBy(coursesNew, (course) => course.name),
+      supervisions,
       sortTitle
     })
   })
@@ -104,7 +108,8 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
 
       return {
         title: classItem.name,
-        plan
+        plan,
+        supervisions: classItem.supervisions
       }
     })
 

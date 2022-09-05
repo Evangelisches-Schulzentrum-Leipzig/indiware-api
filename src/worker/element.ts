@@ -20,10 +20,9 @@ import auth from 'basic-auth'
 import { Request, Response, Router } from 'express'
 import timeoutSignal from 'timeout-signal'
 import { SchoolConfiguration } from '../config'
-import { PlanData } from '../data/index.js'
 import { query } from '../query/index.js'
 import { sleep } from '../util/sleep.js'
-import { buildServableContent, ServableContent } from './servable-content.js'
+import { buildServableContent, ServableContent } from './servable-content/index.js'
 
 export class SchoolWorker {
   readonly config: SchoolConfiguration
@@ -73,90 +72,91 @@ export class SchoolWorker {
   }
 
   private async doQuery() {
-    const newResponse = await query({
-      url: this.config.url,
-      username: this.config.username,
-      password: this.config.password,
+    const studentResponse = await query({
+      url: this.config.student.url,
+      username: 'schueler',
+      password: this.config.student.password,
       locale: this.config.locale,
       timezone: this.config.timezone,
+      type: 'student',
       signal: timeoutSignal(1000 * 60 * 10)
     })
 
-    const newContent = this.buildServableContent(newResponse)
+    const student = {
+      data: studentResponse,
+      password: this.config.skipPasswordCheck ? null : this.config.student.password
+    }
+
+    const teacher = await (async () => {
+      if (this.config.teacher === null) return null
+
+      const teacherResponse = await query({
+        url: this.config.teacher.url,
+        username: 'lehrer',
+        password: this.config.teacher.password,
+        locale: this.config.locale,
+        timezone: this.config.timezone,
+        type: 'teacher',
+        signal: timeoutSignal(1000 * 60 * 10)
+      })
+
+      return {
+        data: teacherResponse,
+        password: this.config.skipPasswordCheck ? null : this.config.teacher.password
+      }
+    })()
+
+    const newContent = buildServableContent({
+      legacy: this.config.legacy,
+      student,
+      teacher
+    })
 
     return newContent
-  }
-
-  private buildServableContent (data: PlanData) {
-    return buildServableContent({
-      data,
-      requestedPassword: this.config.requestedPassword,
-      classNameField: this.config.classNameField
-    })
   }
 
   createRouter (): Router {
     const router = Router()
 
-    const isAuthValid = (req: Request, res: Response) => {
-      if (this.config.requestedPassword !== null) {
+    const isAuthValid = (req: Request, res: Response, password: string) => {
         const authData = auth(req)
 
-        if ((!authData) || authData.pass !== this.config.requestedPassword) {
+        if ((!authData) || authData.pass !== password) {
           res.setHeader('WWW-Authenticate', 'Basic realm="Login"')
           res.sendStatus(401)
           return false
         }
-      }
 
       return true
     }
 
-    router.get('/config/default', (_, res, next) => {
-      this.lastSuccessPromise.then((data) => {
-        res.json(data.configs.get('default'))
-      }).catch((ex) => next(ex))
-    })
-
     router.get('/config/:name', (req, res, next) => {
-      if (!isAuthValid(req, res)) return
-
       this.lastSuccessPromise.then((data) => {
         const config = data.configs.get(req.params.name)
 
-        if (config === undefined) {
-          res.sendStatus(404)
-        } else {
-          res.json(config)
-        }
+        if (config === undefined) res.sendStatus(404)
+        else if (config.password !== null && !isAuthValid(req, res, config.password)) return
+        else res.json(config.content)
       }).catch((ex) => next(ex))
     })
 
     router.get('/content/:name', (req, res, next) => {
-      if (!isAuthValid(req, res)) return
-
       this.lastSuccessPromise.then((data) => {
-        const config = data.contents.get(req.params.name)
+        const content = data.contents.get(req.params.name)
 
-        if (config === undefined) {
-          res.sendStatus(404)
-        } else {
-          res.json(config)
-        }
+        if (content === undefined) res.sendStatus(404)
+        else if (content.password !== null && !isAuthValid(req, res, content.password)) return
+        else res.json(content.content)
       }).catch((ex) => next(ex))
     })
 
     router.get('/plan/:name', (req, res, next) => {
-      if (!isAuthValid(req, res)) return
-
       this.lastSuccessPromise.then((data) => {
-        const config = data.plans.get(req.params.name)
+        const plan = data.plans.get(req.params.name)
 
-        if (config === undefined) {
-          res.sendStatus(404)
-        } else {
-          res.json(config)
-        }
+        if (plan === undefined) res.sendStatus(404)
+        else if (plan.password !== null && !isAuthValid(req, res, plan.password)) return
+        else res.json(plan.content)
       }).catch((ex) => next(ex))
     })
 

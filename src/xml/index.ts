@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 3033 Jonas Lochmann
+ * Copyright (C) 2019 - 2022 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,14 +21,16 @@ import { ParsedPlanFile } from './parsed-plan-file.js'
 import { postprocessPlanFile } from './postprocess-plan-file.js'
 import { readAndPrevalidateXml } from './read-plan-file.js'
 
-export function parsePlanFile ({ input, locale, timezone }: {
+export function parsePlanFile ({ input, locale, timezone, skipClassNameValidation }: {
   input: string
   locale: string
   timezone: string
+  skipClassNameValidation: boolean
 }): ParsedPlanFile {
   return postprocessPlanFile({
     input: readAndPrevalidateXml(input),
     locale,
-    timezone
+    timezone,
+    skipClassNameValidation
   })
 }

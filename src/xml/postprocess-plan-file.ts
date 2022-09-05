@@ -18,7 +18,10 @@
 
 import lodash from 'lodash'
 import moment from 'moment-timezone'
-import { ParsedPlanFile } from './parsed-plan-file.js'
+import {
+  ParsedPlanFile, ParsedPlanFileClass, ParsedPlanFileSupervision,
+  ParsedPlanFileSupervisionType
+} from './parsed-plan-file.js'
 import {
   hasAttributes, parseNumberField,
   readOptionalTextElement, sanitizeEmptyValues
@@ -27,13 +30,14 @@ import { XmlFileSchema } from './xmlschema.js'
 
 const { max, uniq, uniqBy } = lodash
 
-const classNameRegex = /^[0-9/ a-z]*$/
+const classNameRegex = /^[0-9/ a-zA-Z]*$/
 const classicClassNameRegex = /^[0-9]* [a-z]*$/
 
-export function postprocessPlanFile ({ input, locale, timezone }: {
+export function postprocessPlanFile ({ input, locale, timezone, skipClassNameValidation }: {
   input: XmlFileSchema
   locale: string
   timezone: string
+  skipClassNameValidation: boolean
 }): ParsedPlanFile {
   const dateString = input.VpMobil[0].Kopf[0].DatumPlan[0]._text[0]
   const dateMoment = moment.tz(dateString, 'dddd, DD. MMMM YYYY', locale, true, timezone)
@@ -68,14 +72,14 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
   const messages = input.VpMobil[0].ZusatzInfo ?
     input.VpMobil[0].ZusatzInfo[0].ZiZeile.map((message) => readOptionalTextElement(message)).filter((item) => !!item) as Array<string> : []
 
-  const classes = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
+  const classes: Array<ParsedPlanFileClass> = input.VpMobil[0].Klassen[0].Kl.map((classInput) => {
     const title = classInput.Kurz[0]._text[0]
 
-    if (!classNameRegex.test(title)) {
+    if (!skipClassNameValidation && !classNameRegex.test(title)) {
       throw new Error('unexpected class name: ' + title)
     }
 
-    const subjects = (classInput.Unterricht[0].Ue || []).map((subjectInput) => {
+    const subjects = (classInput?.Unterricht?.[0].Ue || []).map((subjectInput) => {
       const id = parseNumberField(subjectInput.UeNr[0]._text[0], 'subject id')
       const subject = subjectInput.UeNr[0]._attributes.UeFa
       const teacher = subjectInput.UeNr[0]._attributes.UeLe
@@ -116,12 +120,16 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
       const info = readOptionalTextElement(lessonInput.If[0])
       const course = lessonInput.Ku2 ? readOptionalTextElement(lessonInput.Ku2[0]) : null
 
-      if (subjectId !== null && subjectIds.indexOf(subjectId) === -1) {
-        throw new Error('invalid subject id: ' + subjectId)
+      if (subjectIds.length > 0) {
+        if (subjectId !== null && subjectIds.indexOf(subjectId) === -1) {
+          throw new Error('invalid subject id: ' + subjectId)
+        }
       }
 
-      if (course !== null && !courses.some((item) => item.name === course)) {
-        throw new Error('invalid course: ' + course)
+      if (courses.length > 0) {
+        if (course !== null && !courses.some((item) => item.name === course)) {
+          throw new Error('invalid course: ' + course)
+        }
       }
 
       return {
@@ -138,12 +146,53 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
       }
     })
 
-    return {
+    const supervisions: Array<ParsedPlanFileSupervision> = (classInput?.Aufsichten?.[0]?.Aufsicht || []).map((supervisionItem) => {
+      let type: ParsedPlanFileSupervisionType
+
+      if (supervisionItem._attributes === undefined) {
+        type = 'regular'
+      } else if (supervisionItem._attributes.AuAe === 'AuVertretung') {
+        type = 'substitute'
+      } else if (supervisionItem._attributes.AuAe === 'AuAusfall') {
+        type = 'cancel'
+      } else {
+        throw new Error('invalid supervision AuAe value')
+      }
+
+      const prevLessonIndex = parseInt(supervisionItem.AuVorStunde[0]._text[0])
+      const time1 = supervisionItem.AuUhrzeit[0]._text[0]
+      const time2 = supervisionItem.AuZeit[0]._text[0]
+      const location = supervisionItem.AuOrt[0]._text[0]
+      const replacementFor = supervisionItem.AuFuer?.[0]?._text[0] || null
+      const info = supervisionItem.AuInfo?.[0]._text[0] || null
+
+      if (!Number.isSafeInteger(prevLessonIndex)) {
+        throw new Error('invalid prevLessonIndex')
+      }
+
+      const result: ParsedPlanFileSupervision = {
+        type,
+        prevLessonIndex,
+        time1,
+        time2,
+        location,
+        replacementFor,
+        info
+      }
+
+      return result
+    })
+
+    const result: ParsedPlanFileClass = {
       title,
+      sortTitle: title,
       subjects,
       courses,
-      plan
+      plan,
+      supervisions
     }
+
+    return result
   })
 
   if (classes.length !== uniqBy(classes, (item) => item.title).length) {
@@ -163,17 +212,16 @@ export function postprocessPlanFile ({ input, locale, timezone }: {
       return { ...item, sortTitle: parts.join(' ') }
     })
   } else {
-    classesWithSortTitle = classes.map((item) => ({
-      ...item,
-      sortTitle: item.title
-    }))
+    classesWithSortTitle = classes
   }
 
-  return {
+  const result: ParsedPlanFile = {
     date: dateMoment.format('YYYY-MM-DD'),
     lastModified: lastModifiedMoment.valueOf(),
     freeDays,
     classes: classesWithSortTitle,
     messages
   }
+
+  return result
 }

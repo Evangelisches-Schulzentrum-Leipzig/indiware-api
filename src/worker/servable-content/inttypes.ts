@@ -16,19 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export interface SchoolConfiguration {
-  id: string
-  title: string
-  student: {
-    url: string
-    password: string
-  }
-  legacy: boolean
-  teacher: {
-    url: string
-    password: string
-  } | null
-  locale: string
-  timezone: string
-  skipPasswordCheck: boolean
+import { ConditionSetItem } from './types.js'
+
+export interface ParameterNames {
+  enableCourseSelection: Array<string>
+  enableSpecificCourse: Array<Array<string>>
+}
+
+export interface ContentSetNames {
+  default: string
+  content: Array<string>
+  full: Array<string>
+  base: Array<string>
+  course: Array<Array<string>>
+}
+
+export interface Conditions {
+  items: Array<ConditionSetItem>
+  finalValidation: string
+  isSpecificClassSelected: Array<string>
+  classAndManualCourseSelectionEnabled: Array<string>
+  classAndAllForceAllCoursesEnabled: Array<string>
+  classAndSpecificCourseEnabled: Array<Array<string>>
 }

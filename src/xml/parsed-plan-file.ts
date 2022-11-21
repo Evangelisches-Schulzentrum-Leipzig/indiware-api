@@ -52,7 +52,6 @@ export interface ParsedPlanFilePlan {
   teacherChanged: boolean
   room: string | null
   roomChanged: boolean
-  subjectId: number | null
   info: string | null
   course: string | null
 }

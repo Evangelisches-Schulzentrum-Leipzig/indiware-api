@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2022 Jonas Lochmann
+ * Copyright (C) 2019 - 2023 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -32,7 +32,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   freeDays = sortBy(uniq(freeDays))
 
   const classesTemp = new Map<string, {
-    courses: Map<string, { teacher: string }>
+    courses: Map<string, { /* teacher: string */ }>
     sortTitle: string
     supervisions: Array<PlanSupervision>
   }>()
@@ -40,7 +40,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   files.forEach((filesItem) => {
     filesItem.classes.forEach((newClassItem) => {
       const existingItem = classesTemp.get(newClassItem.title)
-      let courses: Map<string, { teacher: string }>
+      let courses: Map<string, { /* teacher: string */ }>
 
       if (existingItem) {
         courses = existingItem.courses
@@ -54,7 +54,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
         })
       }
 
-      newClassItem.courses.forEach((course) => courses.set(course.name, { teacher: course.teacher }))
+      newClassItem.courses.forEach((course) => courses.set(course.name, { /* teacher: course.teacher */ }))
     })
   })
 
@@ -62,7 +62,7 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
     name: string
     courses: Array<{
       name: string
-      teacher: string
+      // teacher: string
     }>
     supervisions: Array<PlanSupervision>
     sortTitle: string
@@ -71,12 +71,12 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
   classesTemp.forEach(({ courses, sortTitle, supervisions }, name) => {
     const coursesNew: Array<{
       name: string
-      teacher: string
+      // teacher: string
     }> = []
 
-    courses.forEach(({ teacher }, name) => coursesNew.push({
+    courses.forEach((_, name) => coursesNew.push({
       name,
-      teacher
+      // teacher
     }))
 
     classes.push({

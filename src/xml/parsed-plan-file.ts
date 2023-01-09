@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2022 Jonas Lochmann
+ * Copyright (C) 2019 - 2023 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -41,7 +41,7 @@ export interface ParsedPlanFileSubject {
 
 export interface ParsedPlanFileCourse {
   name: string
-  teacher: string
+  // teacher: string
 }
 
 export interface ParsedPlanFilePlan {

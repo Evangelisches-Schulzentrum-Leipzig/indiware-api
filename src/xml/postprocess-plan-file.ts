@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2022 Jonas Lochmann
+ * Copyright (C) 2019 - 2023 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -95,16 +95,12 @@ export function postprocessPlanFile ({ input, locale, timezone, skipClassNameVal
       throw new Error('duplicate subject ids')
     }
 
-    const courses = (classInput.Kurse?.[0]?.Ku || []).map((courseInput) => {
+    const courses = uniqBy((classInput.Kurse?.[0]?.Ku || []).map((courseInput) => {
       const name = courseInput.KKz[0]._text[0]
       const teacher = courseInput.KKz[0]._attributes.KLe
 
       return { name, teacher }
-    })
-
-    if (courses.length !== uniqBy(courses, (item) => item.name).length) {
-      throw new Error('duplicate course names')
-    }
+    }), (item) => item.name)
 
     const plan = (classInput.Pl[0].Std || []).map((lessonInput) => {
       const lesson = parseNumberField(lessonInput.St[0]._text[0], 'lesson')

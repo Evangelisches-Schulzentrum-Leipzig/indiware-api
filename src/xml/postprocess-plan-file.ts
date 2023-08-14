@@ -30,7 +30,7 @@ import { XmlFileSchema } from './xmlschema.js'
 
 const { max, uniq, uniqBy } = lodash
 
-const classNameRegex = /^[0-9/ a-zA-Z]*$/
+const classNameRegex = /^[0-9/ a-zA-ZÄÖÜäöü]*$/
 const classicClassNameRegex = /^[0-9]* [a-z]*$/
 
 export function postprocessPlanFile ({ input, locale, timezone, skipClassNameValidation }: {

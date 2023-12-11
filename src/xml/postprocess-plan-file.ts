@@ -111,11 +111,14 @@ export function postprocessPlanFile ({ input, locale, timezone, skipClassNameVal
       const room = sanitizeEmptyValues(readOptionalTextElement(lessonInput.Ra[0]))
       const roomChanged = hasAttributes(lessonInput.Ra[0])
       const info = readOptionalTextElement(lessonInput.If[0])
-      const course = lessonInput.Ku2 ? readOptionalTextElement(lessonInput.Ku2[0]) : null
+      let course = lessonInput.Ku2 ? readOptionalTextElement(lessonInput.Ku2[0]) : null
 
       if (courses.length > 0) {
         if (course !== null && !courses.some((item) => item.name === course)) {
-          throw new Error('invalid course: ' + course)
+          // this will show the item to everyone
+          // this handles wrong course references
+
+          course = null
         }
       }
 

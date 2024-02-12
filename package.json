@@ -1,4 +1,6 @@
 {
+  "name": "vertretungsplan-integration-indiware",
+  "version": "development",
   "dependencies": {
     "ajv": "^6.10.2",
     "basic-auth": "^2.0.1",

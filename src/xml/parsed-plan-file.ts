@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2023 Jonas Lochmann
+ * Copyright (C) 2019 - 2024 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -66,4 +66,4 @@ export interface ParsedPlanFileSupervision {
   info: string | null
 }
 
-export type ParsedPlanFileSupervisionType = 'regular' | 'cancel' | 'substitute'
+export type ParsedPlanFileSupervisionType = 'regular' | 'cancel' | 'substitute' | 'adjusted'

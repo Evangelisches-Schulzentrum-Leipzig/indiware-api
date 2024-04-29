@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2023 Jonas Lochmann
+ * Copyright (C) 2019 - 2024 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -142,6 +142,8 @@ export function postprocessPlanFile ({ input, locale, timezone, skipClassNameVal
         type = 'regular'
       } else if (supervisionItem._attributes.AuAe === 'AuVertretung') {
         type = 'substitute'
+      } else if (supervisionItem._attributes.AuAe === 'AuGeaendert') {
+        type = 'adjusted'
       } else if (supervisionItem._attributes.AuAe === 'AuAusfall') {
         type = 'cancel'
       } else {

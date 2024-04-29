@@ -99,7 +99,7 @@ export interface XmlFileSchema {
           Empty | {
             Aufsicht: Array<{
               _attributes?: {
-                AuAe: 'AuVertretung' | 'AuAusfall'
+                AuAe: 'AuVertretung' | 'AuAusfall' | 'AuGeaendert'
               }
               AuTag: [XmlTextElement]
               AuVorStunde: [XmlTextElement]

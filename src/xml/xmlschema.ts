@@ -88,7 +88,7 @@ export interface XmlFileSchema {
           Klausur: Array<{
             KlJahrgang: [XmlTextElement]
             KlKurs: [XmlTextElement]
-            KlKursleiter: [XmlTextElement]
+            KlKursleiter: [XmlTextElement | Record<string, never>]
             KlStunde: [XmlTextElement]
             KlBeginn: [XmlTextElement]
             KlDauer: [XmlTextElement]

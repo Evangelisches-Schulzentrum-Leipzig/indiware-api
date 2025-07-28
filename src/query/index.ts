@@ -1,6 +1,6 @@
 /*
  * vertretungsplan.io indiware crawler
- * Copyright (C) 2019 - 2022 Jonas Lochmann
+ * Copyright (C) 2019 - 2025 Jonas Lochmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,7 @@
 import lodash from 'lodash'
 import moment, { Moment } from 'moment-timezone'
 import fetch from 'node-fetch'
+import { fetchOptions } from '../request.js'
 import { mergePlanFiles, PlanData } from '../data/index.js'
 import { ParsedPlanFile, parsePlanFile } from '../xml/index.js'
 
@@ -54,7 +55,7 @@ export async function query ({ url, username, password, timezone, locale, signal
     const expectedDate = date.format('YYYY-MM-DD')
 
     const planUrl = url + 'Plan' + (type === 'student' ? 'Kl' : 'Le') + dateForUrl + '.xml'
-    const planContent = await fetch(planUrl, { headers, signal })
+    const planContent = await fetch(planUrl, { ...fetchOptions, headers, signal })
 
     if ((planContent.status === 300) || (planContent.status === 404) || (planContent.status === 503)) {
       // ignore this date, there is no plan for it
@@ -84,7 +85,7 @@ export async function query ({ url, username, password, timezone, locale, signal
 
   if (data.length === 0) {
     const planUrl = url + (type === 'student' ? 'Klassen' : 'Lehrer') + '.xml'
-    const planContent = await fetch(planUrl, { headers, signal })
+    const planContent = await fetch(planUrl, { ...fetchOptions, headers, signal })
 
     if ((planContent.status === 300) || (planContent.status === 404)) {
       throw new Error('no fallback plan found')

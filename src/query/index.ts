@@ -25,6 +25,9 @@ import { ParsedPlanFile, parsePlanFile } from '../xml/index.js'
 
 const { without } = lodash
 
+const lastETagByUrl: Map<string, string> = new Map()
+const lastModifiedByUrl: Map<string, string> = new Map()
+
 type PlanType = 'student' | 'teacher'
 
 export async function query ({ url, username, password, timezone, locale, signal, type }: {
@@ -55,16 +58,53 @@ export async function query ({ url, username, password, timezone, locale, signal
     const expectedDate = date.format('YYYY-MM-DD')
 
     const planUrl = url + 'Plan' + (type === 'student' ? 'Kl' : 'Le') + dateForUrl + '.xml'
-    const planContent = await fetch(planUrl, { ...fetchOptions, headers, signal })
+    const headersWithETag = { 
+      ...headers, 
+      'If-None-Match': lastETagByUrl.get(planUrl) || ''
+    }
 
-    if ((planContent.status === 300) || (planContent.status === 404) || (planContent.status === 503)) {
+    // Prefetch HEAD to get ETag   
+    const headResponse = await fetch(planUrl, { method: 'HEAD', ...fetchOptions, headers: headers, signal })
+
+    if ((headResponse.status === 300) || (headResponse.status === 404) || (headResponse.status === 503)) {
       // ignore this date, there is no plan for it
 
       return null
     }
+    
+    // console.log('fetching GET plan url', planUrl)
+    const planContent = await fetch(planUrl, { ...fetchOptions, headers: headersWithETag, signal })
+
+    if (planContent.status === 304) {
+      // check if last modified date is 24 hours from last fetch
+      const lastModified = planContent.headers.get('Last-Modified')
+      const previousLastModified = lastModifiedByUrl.get(planUrl)
+      
+      if (lastModified && previousLastModified) {
+        const lastModifiedTime = new Date(lastModified).getTime()
+        const previousLastModifiedTime = new Date(previousLastModified).getTime()
+        if ((lastModifiedTime - previousLastModifiedTime) < (24 * 60 * 60 * 1000)) {
+          // not modified based on ETag and Last Modified Date diffrence smaller than 24 hours, skip this date
+
+          return null
+        }
+        // continue to fetch the plan as it might have changed
+      } else {
+        // not modified based on ETag, skip this date
+
+        return null
+      }
+    }
 
     if (planContent.status !== 200) {
       throw new Error('failed to query ' + planUrl + ' - ' + planContent.status)
+    }
+
+    if (planContent.headers.has('ETag') && planContent.headers.get('ETag') !== null) {
+      lastETagByUrl.set(planUrl, planContent.headers.get('ETag') || "")
+    }
+    if (planContent.headers.has('Last-Modified') && planContent.headers.get('Last-Modified') !== null) {
+      lastModifiedByUrl.set(planUrl, planContent.headers.get('Last-Modified') || "")
     }
 
     const parsedPlanFile = parsePlanFile({

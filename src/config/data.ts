@@ -70,3 +70,25 @@ if (process.env.TVDS_STUD_PASSWORD) {
     skipPasswordCheck: false
   })
 }
+
+const EVS_STUD_PASSWORD = ""
+const EVS_TEACH_PASSWORD = ""
+
+if (EVS_STUD_PASSWORD) {
+  schools.push({
+    id: 'evaschulze',
+    title: 'Evangelisches Schulzentrum Leipzig',
+    student: {
+      url: 'https://stundenplan24.de/10040832/mobil/mobdaten/',
+      password: EVS_STUD_PASSWORD
+    },
+    teacher: EVS_TEACH_PASSWORD ? {
+      url: 'https://www.stundenplan24.de/10040832/moble/mobdaten/',
+      password: EVS_TEACH_PASSWORD
+    } : null,
+    legacy: false,
+    timezone: 'Europe/Berlin',
+    locale: 'de',
+    skipPasswordCheck: true
+  })
+}

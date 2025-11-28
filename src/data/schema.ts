@@ -42,6 +42,8 @@ export interface PlanData {
         roomChanged: boolean
         info: string | null
         course: string | null
+        startTime: string | null
+        endTime: string | null
       }>
       supervisions: Array<PlanSupervision>
     }>

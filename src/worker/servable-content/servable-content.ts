@@ -229,7 +229,9 @@ function buildServableContentForSingleUserCategory({ prefix, data, password }: {
           teacherChanged: item.teacherChanged,
           room: item.room,
           roomChanged: item.roomChanged,
-          info: item.info
+          info: item.info,
+          startTime: item.startTime,
+          endTime: item.endTime
         }
 
         itemsFull.push(preparedItem)

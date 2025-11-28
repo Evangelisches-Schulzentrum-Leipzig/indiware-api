@@ -103,7 +103,9 @@ export function mergePlanFiles (files: Array<ParsedPlanFile>): PlanData {
         room: item.room,
         roomChanged: item.roomChanged,
         info: item.info,
-        course: item.course
+        course: item.course,
+        startTime: item.startTime,
+        endTime: item.endTime
       }))
 
       return {

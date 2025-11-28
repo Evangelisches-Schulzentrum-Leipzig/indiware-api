@@ -27,6 +27,8 @@ export interface PlanItem {
   room: string | null
   roomChanged: boolean
   info: string | null
+  startTime: string | null
+  endTime: string | null
 }
 
 export interface PlanContent {

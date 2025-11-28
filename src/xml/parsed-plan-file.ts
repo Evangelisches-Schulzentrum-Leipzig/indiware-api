@@ -54,6 +54,8 @@ export interface ParsedPlanFilePlan {
   roomChanged: boolean
   info: string | null
   course: string | null
+  startTime: string | null
+  endTime: string | null
 }
 
 export interface ParsedPlanFileSupervision {

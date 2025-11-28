@@ -111,6 +111,8 @@ export function postprocessPlanFile ({ input, locale, timezone, skipClassNameVal
       const room = sanitizeEmptyValues(readOptionalTextElement(lessonInput.Ra[0]))
       const roomChanged = hasAttributes(lessonInput.Ra[0])
       const info = readOptionalTextElement(lessonInput.If[0])
+      const startTime = readOptionalTextElement(lessonInput.Beginn[0])
+      const endTime = readOptionalTextElement(lessonInput.Ende[0])
       let course = lessonInput.Ku2 ? readOptionalTextElement(lessonInput.Ku2[0]) : null
 
       if (courses.length > 0) {
@@ -131,7 +133,9 @@ export function postprocessPlanFile ({ input, locale, timezone, skipClassNameVal
         room,
         roomChanged,
         info,
-        course
+        course,
+        startTime,
+        endTime
       }
     })
 

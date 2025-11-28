@@ -79,7 +79,7 @@ export class SchoolWorker {
       locale: this.config.locale,
       timezone: this.config.timezone,
       type: 'student',
-      signal: timeoutSignal(1000 * 60 * 10)
+      signal: timeoutSignal(1000 * 60 * 10) as unknown as AbortSignal
     })
 
     const student = {
@@ -97,7 +97,7 @@ export class SchoolWorker {
         locale: this.config.locale,
         timezone: this.config.timezone,
         type: 'teacher',
-        signal: timeoutSignal(1000 * 60 * 10)
+        signal: timeoutSignal(1000 * 60 * 10) as unknown as AbortSignal
       })
 
       return {

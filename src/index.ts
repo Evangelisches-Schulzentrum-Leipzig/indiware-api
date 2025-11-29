@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import cors from 'cors'
 import express from 'express'
 import { createSchoolWorkers } from './worker/index.js'
 
 const app = express()
 const workers = createSchoolWorkers()
+
+app.use(cors())
 
 app.get('/vp-content', (_, res) => {
   res.json({
@@ -68,6 +71,6 @@ workers.forEach((worker) => {
   app.use('/vp-institution/' + worker.config.id, worker.createRouter())
 })
 
-app.listen(process.env.PORT || 8080)
+app.listen(process.env.PORT || 8081)
 
 console.log('ready')

@@ -27,6 +27,7 @@ const { without } = lodash
 
 const lastETagByUrl: Map<string, string> = new Map()
 const lastModifiedByUrl: Map<string, string> = new Map()
+const lastResponseByUrl: Map<string, string> = new Map()
 
 type PlanType = 'student' | 'teacher'
 
@@ -74,6 +75,7 @@ export async function query ({ url, username, password, timezone, locale, signal
     
     // console.log('fetching GET plan url', planUrl)
     const planContent = await fetch(planUrl, { ...fetchOptions, headers: headersWithETag, signal })
+    let planXml = null;
 
     if (planContent.status === 304) {
       // check if last modified date is 24 hours from last fetch
@@ -86,17 +88,21 @@ export async function query ({ url, username, password, timezone, locale, signal
         if ((lastModifiedTime - previousLastModifiedTime) < (24 * 60 * 60 * 1000)) {
           // not modified based on ETag and Last Modified Date diffrence smaller than 24 hours, skip this date
 
-          return null
+          if (lastResponseByUrl.has(planUrl)) {
+            planXml = lastResponseByUrl.get(planUrl) || ""
+          }
         }
         // continue to fetch the plan as it might have changed
       } else {
         // not modified based on ETag, skip this date
 
-        return null
+        if (lastResponseByUrl.has(planUrl)) {
+          planXml = lastResponseByUrl.get(planUrl) || ""
+        }
       }
     }
 
-    if (planContent.status !== 200) {
+    if (planContent.status !== 200 && planXml === null) {
       throw new Error('failed to query ' + planUrl + ' - ' + planContent.status)
     }
 
@@ -107,8 +113,12 @@ export async function query ({ url, username, password, timezone, locale, signal
       lastModifiedByUrl.set(planUrl, planContent.headers.get('Last-Modified') || "")
     }
 
+    if (planXml === null) {
+      planXml = await planContent.text()
+      lastResponseByUrl.set(planUrl, planXml)
+    }
     const parsedPlanFile = parsePlanFile({
-      input: await planContent.text(),
+      input: planXml,
       timezone,
       locale,
       skipClassNameValidation

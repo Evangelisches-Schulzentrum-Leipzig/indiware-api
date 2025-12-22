@@ -1,0 +1,62 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Vertretungsplan API",
+    "description": "",
+    "contact": {
+      "email": "support@schulzentrum.de"
+    },
+    "license": {
+      "name": "Open Source License 3.0",
+      "url": "https://opensource.org/license/osl-3-0"
+    },
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "https://secure-gateway.schulzentrum.de/api/v1/timetable"
+    }
+  ],
+  "paths": {
+    "/classes": {
+      "get": {
+        "summary": "Returns list of all classes"
+      }
+    },
+    "/rooms": {
+      "get": {
+        "summary": "Returns list of all rooms"
+      }
+    },
+    "/teachers": {
+      "get": {
+        "summary": "Returns list of all teachers"
+      }
+    },
+    "/plans/{date}/classes/{id}": {
+      "parameters": [
+        {
+          "name": "date",
+          "description": "Date for requested timetable",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "id",
+          "description": "ID of a specific class",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Returns timetable for a specific date and class"
+      }
+    }
+  }
+}

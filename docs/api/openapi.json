@@ -10,7 +10,7 @@
       "name": "Open Source License 3.0",
       "url": "https://opensource.org/license/osl-3-0"
     },
-    "version": "0.0.3"
+    "version": "0.0.4"
   },
   "servers": [
     {
@@ -112,14 +112,7 @@
     "/metadata/current-period/{timestamp}": {
       "parameters": [
         {
-          "name": "timestamp",
-          "description": "Timestamp to check for active lesson period",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date-time"
-          }
+          "$ref": "#/components/parameters/TimestampPath"
         }
       ],
       "get": {
@@ -156,14 +149,7 @@
     "/plans/daily/{date}/classes/changes": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -176,14 +162,7 @@
     "/plans/daily/{date}/teachers/changes": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -196,14 +175,7 @@
     "/plans/daily/{date}/rooms/changes": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -216,14 +188,7 @@
     "/plans/daily/{date}/classes": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -236,23 +201,10 @@
     "/plans/daily/{date}/classes/{id}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         },
         {
-          "name": "id",
-          "description": "ID of a specific class",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/ClassIdPath"
         }
       ],
       "get": {
@@ -265,14 +217,7 @@
     "/plans/daily/{date}/rooms": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -282,26 +227,13 @@
         "summary": "Returns timetable for a specific date and all rooms"
       }
     },
-    "/plans/daily/{date}/rooms/{id}": {
+    "/plans/daily/{date}/rooms/{roomID}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         },
         {
-          "name": "id",
-          "description": "ID of a specific room",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/RoomIdPath"
         }
       ],
       "get": {
@@ -314,14 +246,7 @@
     "/plans/daily/{date}/teachers": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -334,23 +259,10 @@
     "/plans/daily/{date}/teachers/{id}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         },
         {
-          "name": "id",
-          "description": "ID of a specific teacher",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/TeacherIdPath"
         }
       ],
       "get": {
@@ -395,13 +307,7 @@
     "/plans/daily/today/classes/{id}": {
       "parameters": [
         {
-          "name": "id",
-          "description": "ID of a specific class",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/ClassIdPath"
         }
       ],
       "get": {
@@ -419,16 +325,10 @@
         "summary": "Returns timetable for today and all rooms"
       }
     },
-    "/plans/daily/today/rooms/{id}": {
+    "/plans/daily/today/rooms/{roomID}": {
       "parameters": [
         {
-          "name": "id",
-          "description": "ID of a specific room",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/RoomIdPath"
         }
       ],
       "get": {
@@ -449,13 +349,7 @@
     "/plans/daily/today/teachers/{id}": {
       "parameters": [
         {
-          "name": "id",
-          "description": "ID of a specific teacher",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/TeacherIdPath"
         }
       ],
       "get": {
@@ -465,57 +359,10 @@
         "summary": "Returns timetable for today and teacher"
       }
     },
-    "/plans/weekly/{date}/teachers/changes": {
-      "parameters": [
-        {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-weekly"
-        ],
-        "summary": "Returns timetable changes for a week grouped by teacher"
-      }
-    },
-    "/plans/weekly/{date}/rooms/changes": {
-      "parameters": [
-        {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-weekly"
-        ],
-        "summary": "Returns timetable changes for a week grouped by room"
-      }
-    },
     "/plans/weekly/{date}/classes": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/WeekDatePath"
         }
       ],
       "get": {
@@ -528,23 +375,10 @@
     "/plans/weekly/{date}/classes/{id}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/WeekDatePath"
         },
         {
-          "name": "id",
-          "description": "ID of a specific class",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/ClassIdPath"
         }
       ],
       "get": {
@@ -557,14 +391,7 @@
     "/plans/weekly/{date}/rooms": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/WeekDatePath"
         }
       ],
       "get": {
@@ -574,26 +401,13 @@
         "summary": "Returns timetable for a week and all rooms"
       }
     },
-    "/plans/weekly/{date}/rooms/{id}": {
+    "/plans/weekly/{date}/rooms/{roomID}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/WeekDatePath"
         },
         {
-          "name": "id",
-          "description": "ID of a specific room",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/RoomIdPath"
         }
       ],
       "get": {
@@ -606,14 +420,7 @@
     "/plans/weekly/{date}/teachers": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/WeekDatePath"
         }
       ],
       "get": {
@@ -626,23 +433,10 @@
     "/plans/weekly/{date}/teachers/{id}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date that is inside requested week timetable",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/WeekDatePath"
         },
         {
-          "name": "id",
-          "description": "ID of a specific teacher",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/TeacherIdPath"
         }
       ],
       "get": {
@@ -650,22 +444,6 @@
           "plan-weekly"
         ],
         "summary": "Returns timetable for a week and teacher"
-      }
-    },
-    "/plans/weekly/today/teachers/changes": {
-      "get": {
-        "tags": [
-          "plan-weekly"
-        ],
-        "summary": "Returns timetable changes for this week grouped by teacher"
-      }
-    },
-    "/plans/weekly/today/rooms/changes": {
-      "get": {
-        "tags": [
-          "plan-weekly"
-        ],
-        "summary": "Returns timetable changes for this week grouped by room"
       }
     },
     "/plans/weekly/today/classes": {
@@ -679,13 +457,7 @@
     "/plans/weekly/today/classes/{id}": {
       "parameters": [
         {
-          "name": "id",
-          "description": "ID of a specific class",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/ClassIdPath"
         }
       ],
       "get": {
@@ -703,16 +475,10 @@
         "summary": "Returns timetable for this week and all rooms"
       }
     },
-    "/plans/weekly/today/rooms/{id}": {
+    "/plans/weekly/today/rooms/{roomID}": {
       "parameters": [
         {
-          "name": "id",
-          "description": "ID of a specific room",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/RoomIdPath"
         }
       ],
       "get": {
@@ -733,13 +499,7 @@
     "/plans/weekly/today/teachers/{id}": {
       "parameters": [
         {
-          "name": "id",
-          "description": "ID of a specific teacher",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/TeacherIdPath"
         }
       ],
       "get": {
@@ -760,13 +520,7 @@
     "/rooms/{roomID}/availability/today": {
       "parameters": [
         {
-          "name": "roomID",
-          "description": "ID of a specific room",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/RoomIdPath"
         }
       ],
       "get": {
@@ -779,14 +533,7 @@
     "/rooms/availability/{date}": {
       "parameters": [
         {
-          "name": "date",
-          "description": "Date for requested room availability",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -799,23 +546,10 @@
     "/rooms/{roomID}/availability/{date}": {
       "parameters": [
         {
-          "name": "roomID",
-          "description": "ID of a specific room",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "integer"
-          }
+          "$ref": "#/components/parameters/RoomIdPath"
         },
         {
-          "name": "date",
-          "description": "Date for requested room availability",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "date"
-          }
+          "$ref": "#/components/parameters/DatePath"
         }
       ],
       "get": {
@@ -823,6 +557,338 @@
           "roomavailability"
         ],
         "summary": "Returns availability of a specific room for a specific date"
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "DatePath": {
+        "name": "date",
+        "description": "Date for requested timetable",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "WeekDatePath": {
+        "name": "date",
+        "description": "Date that is inside requested week timetable",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "ClassIdPath": {
+        "name": "id",
+        "description": "ID of a specific class",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "TeacherIdPath": {
+        "name": "id",
+        "description": "ID of a specific teacher",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "RoomIdPath": {
+        "name": "roomID",
+        "description": "ID of a specific room",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "TimestampPath": {
+        "name": "timestamp",
+        "description": "Timestamp to check for active lesson period",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "schemas": {
+      "Teacher": {
+        "type": "object",
+        "required": [
+          "id",
+          "shortName"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "examples": [
+              101
+            ]
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Unique initials or short code of the teacher",
+            "examples": [
+              "SMI"
+            ]
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "examples": [
+              50
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Room number or name",
+            "examples": [
+              "3.12"
+            ]
+          },
+          "building": {
+            "type": "string",
+            "examples": [
+              "Main Building"
+            ]
+          }
+        }
+      },
+      "SchoolClass": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "examples": [
+              12
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Grade and identifier",
+            "examples": [
+              "10A"
+            ]
+          }
+        }
+      },
+      "Subject": {
+        "type": "object",
+        "required": [
+          "id",
+          "shortName"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "examples": [
+              5
+            ]
+          },
+          "shortName": {
+            "type": "string",
+            "examples": [
+              "MA"
+            ]
+          },
+          "longName": {
+            "type": "string",
+            "examples": [
+              "Mathematics"
+            ]
+          }
+        }
+      },
+      "Period": {
+        "type": "object",
+        "required": [
+          "id",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The lesson number",
+            "examples": [
+              1
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):?([0-5]\\d)$",
+            "examples": [
+              "08:00"
+            ]
+          },
+          "endTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):?([0-5]\\d)$",
+            "examples": [
+              "08:45"
+            ]
+          }
+        }
+      },
+      "Holiday": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "Christmas Break"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "TimetableEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "date",
+          "period",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "period": {
+            "$ref": "#/components/schemas/Period"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/Subject"
+          },
+          "teacher": {
+            "$ref": "#/components/schemas/Teacher"
+          },
+          "room": {
+            "$ref": "#/components/schemas/Room"
+          },
+          "classes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolClass"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Current state of the lesson",
+            "enum": [
+              "scheduled",
+              "substituted",
+              "cancelled",
+              "time_change",
+              "room_change"
+            ]
+          },
+          "substitutionInfo": {
+            "type": "object",
+            "description": "Details if the lesson is not 'scheduled'",
+            "properties": {
+              "originalTeacher": {
+                "$ref": "#/components/schemas/Teacher"
+              },
+              "originalRoom": {
+                "$ref": "#/components/schemas/Room"
+              },
+              "changeReason": {
+                "type": "string",
+                "examples": [
+                  "Illness"
+                ]
+              },
+              "notes": {
+                "type": "string",
+                "examples": [
+                  "Work on textbook page 45"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "RoomAvailability": {
+        "type": "object",
+        "properties": {
+          "room": {
+            "$ref": "#/components/schemas/Room"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "periodId": {
+                  "type": "integer"
+                },
+                "startTime": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):?([0-5]\\d)$"
+                },
+                "endTime": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):?([0-5]\\d)$"
+                },
+                "isAvailable": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PlanResponse": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimetableEntry"
+            }
+          }
+        }
       }
     }
   }

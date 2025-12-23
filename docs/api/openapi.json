@@ -10,7 +10,7 @@
       "name": "Open Source License 3.0",
       "url": "https://opensource.org/license/osl-3-0"
     },
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   "servers": [
     {
@@ -42,6 +42,14 @@
           "metadata"
         ],
         "summary": "Returns list of all classes"
+      }
+    },
+    "/metadata/classes/groups": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns list of all class groups"
       }
     },
     "/metadata/rooms": {
@@ -76,6 +84,51 @@
         "summary": "Returns all dates with status"
       }
     },
+    "/metadata/dates/next-school-day": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns the date of the next valid school day",
+        "description": "Returns the date of the next valid school day (skipping weekends and holidays)"
+      }
+    },
+    "/metadata/latest-date": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns the latest date for which timetable data is available"
+      }
+    },
+    "/metadata/current-period": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns the current active lesson period based on server time"
+      }
+    },
+    "/metadata/current-period/{timestamp}": {
+      "parameters": [
+        {
+          "name": "timestamp",
+          "description": "Timestamp to check for active lesson period",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns the current active lesson period based on provided timestamp"
+      }
+    },
     "/metadata/periods": {
       "get": {
         "tags": [
@@ -90,6 +143,14 @@
           "metadata"
         ],
         "summary": "Returns a list of all subjects"
+      }
+    },
+    "/metadata/subjects/groups": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns a list of all subject groups"
       }
     },
     "/plans/daily/{date}/classes/changes": {

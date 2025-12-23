@@ -101,6 +101,14 @@
         "description": "Returns the date of the next valid school day (skipping weekends and holidays)"
       }
     },
+    "/metadata/available-dates": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns date range for which timetable data is available"
+      }
+    },
     "/metadata/latest-date": {
       "get": {
         "tags": [

@@ -10,7 +10,7 @@
       "name": "Open Source License 3.0",
       "url": "https://opensource.org/license/osl-3-0"
     },
-    "version": "0.0.4"
+    "version": "0.0.5"
   },
   "servers": [
     {
@@ -52,6 +52,22 @@
         "summary": "Returns list of all class groups"
       }
     },
+    "/metadata/subjects": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns a list of all subjects"
+      }
+    },
+    "/metadata/subjects/groups": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns a list of all subject groups"
+      }
+    },
     "/metadata/rooms": {
       "get": {
         "tags": [
@@ -66,14 +82,6 @@
           "metadata"
         ],
         "summary": "Returns list of all teachers"
-      }
-    },
-    "/metadata/holidays": {
-      "get": {
-        "tags": [
-          "metadata"
-        ],
-        "summary": "Returns all holidays with dates"
       }
     },
     "/metadata/dates": {
@@ -101,6 +109,22 @@
         "summary": "Returns the latest date for which timetable data is available"
       }
     },
+    "/metadata/holidays": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns all holidays with dates"
+      }
+    },
+    "/metadata/periods": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Returns all periods with times"
+      }
+    },
     "/metadata/current-period": {
       "get": {
         "tags": [
@@ -122,30 +146,6 @@
         "summary": "Returns the current active lesson period based on provided timestamp"
       }
     },
-    "/metadata/periods": {
-      "get": {
-        "tags": [
-          "metadata"
-        ],
-        "summary": "Returns all periods with times"
-      }
-    },
-    "/metadata/subjects": {
-      "get": {
-        "tags": [
-          "metadata"
-        ],
-        "summary": "Returns a list of all subjects"
-      }
-    },
-    "/metadata/subjects/groups": {
-      "get": {
-        "tags": [
-          "metadata"
-        ],
-        "summary": "Returns a list of all subject groups"
-      }
-    },
     "/plans/daily/{date}/classes/changes": {
       "parameters": [
         {
@@ -157,32 +157,6 @@
           "plan-daily"
         ],
         "summary": "Returns timetable changes for a specific date grouped by class"
-      }
-    },
-    "/plans/daily/{date}/teachers/changes": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/DatePath"
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable changes for a specific date grouped by teacher"
-      }
-    },
-    "/plans/daily/{date}/rooms/changes": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/DatePath"
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable changes for a specific date grouped by room"
       }
     },
     "/plans/daily/{date}/classes": {
@@ -214,33 +188,46 @@
         "summary": "Returns timetable for a specific date and class"
       }
     },
-    "/plans/daily/{date}/rooms": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/DatePath"
-        }
-      ],
+    "/plans/daily/today/classes/changes": {
       "get": {
         "tags": [
           "plan-daily"
         ],
-        "summary": "Returns timetable for a specific date and all rooms"
+        "summary": "Returns timetable changes for today grouped by class"
       }
     },
-    "/plans/daily/{date}/rooms/{roomID}": {
+    "/plans/daily/today/classes": {
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable for today and all classes"
+      }
+    },
+    "/plans/daily/today/classes/{id}": {
       "parameters": [
         {
-          "$ref": "#/components/parameters/DatePath"
-        },
-        {
-          "$ref": "#/components/parameters/RoomIdPath"
+          "$ref": "#/components/parameters/ClassIdPath"
         }
       ],
       "get": {
         "tags": [
           "plan-daily"
         ],
-        "summary": "Returns timetable for a specific date and room"
+        "summary": "Returns timetable for today and class"
+      }
+    },
+    "/plans/daily/{date}/teachers/changes": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DatePath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable changes for a specific date grouped by teacher"
       }
     },
     "/plans/daily/{date}/teachers": {
@@ -272,70 +259,12 @@
         "summary": "Returns timetable for a specific date and teacher"
       }
     },
-    "/plans/daily/today/classes/changes": {
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable changes for today grouped by class"
-      }
-    },
     "/plans/daily/today/teachers/changes": {
       "get": {
         "tags": [
           "plan-daily"
         ],
         "summary": "Returns timetable changes for today grouped by teacher"
-      }
-    },
-    "/plans/daily/today/rooms/changes": {
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable changes for today grouped by room"
-      }
-    },
-    "/plans/daily/today/classes": {
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable for today and all classes"
-      }
-    },
-    "/plans/daily/today/classes/{id}": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/ClassIdPath"
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable for today and class"
-      }
-    },
-    "/plans/daily/today/rooms": {
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable for today and all rooms"
-      }
-    },
-    "/plans/daily/today/rooms/{roomID}": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/RoomIdPath"
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-daily"
-        ],
-        "summary": "Returns timetable for today and room"
       }
     },
     "/plans/daily/today/teachers": {
@@ -357,6 +286,77 @@
           "plan-daily"
         ],
         "summary": "Returns timetable for today and teacher"
+      }
+    },
+    "/plans/daily/{date}/rooms/changes": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DatePath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable changes for a specific date grouped by room"
+      }
+    },
+    "/plans/daily/{date}/rooms": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DatePath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable for a specific date and all rooms"
+      }
+    },
+    "/plans/daily/{date}/rooms/{roomID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DatePath"
+        },
+        {
+          "$ref": "#/components/parameters/RoomIdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable for a specific date and room"
+      }
+    },
+    "/plans/daily/today/rooms/changes": {
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable changes for today grouped by room"
+      }
+    },
+    "/plans/daily/today/rooms": {
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable for today and all rooms"
+      }
+    },
+    "/plans/daily/today/rooms/{roomID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RoomIdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-daily"
+        ],
+        "summary": "Returns timetable for today and room"
       }
     },
     "/plans/weekly/{date}/classes": {
@@ -388,33 +388,25 @@
         "summary": "Returns timetable for a week and class"
       }
     },
-    "/plans/weekly/{date}/rooms": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/WeekDatePath"
-        }
-      ],
+    "/plans/weekly/today/classes": {
       "get": {
         "tags": [
           "plan-weekly"
         ],
-        "summary": "Returns timetable for a week and all rooms"
+        "summary": "Returns timetable for this week and all classes"
       }
     },
-    "/plans/weekly/{date}/rooms/{roomID}": {
+    "/plans/weekly/today/classes/{id}": {
       "parameters": [
         {
-          "$ref": "#/components/parameters/WeekDatePath"
-        },
-        {
-          "$ref": "#/components/parameters/RoomIdPath"
+          "$ref": "#/components/parameters/ClassIdPath"
         }
       ],
       "get": {
         "tags": [
           "plan-weekly"
         ],
-        "summary": "Returns timetable for a week and room"
+        "summary": "Returns timetable for this week and class"
       }
     },
     "/plans/weekly/{date}/teachers": {
@@ -446,25 +438,54 @@
         "summary": "Returns timetable for a week and teacher"
       }
     },
-    "/plans/weekly/today/classes": {
+    "/plans/weekly/today/teachers": {
       "get": {
         "tags": [
           "plan-weekly"
         ],
-        "summary": "Returns timetable for this week and all classes"
+        "summary": "Returns timetable for this week and all teachers"
       }
     },
-    "/plans/weekly/today/classes/{id}": {
+    "/plans/weekly/today/teachers/{id}": {
       "parameters": [
         {
-          "$ref": "#/components/parameters/ClassIdPath"
+          "$ref": "#/components/parameters/TeacherIdPath"
         }
       ],
       "get": {
         "tags": [
           "plan-weekly"
         ],
-        "summary": "Returns timetable for this week and class"
+        "summary": "Returns timetable for this week and teacher"
+      }
+    },
+    "/plans/weekly/{date}/rooms": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/WeekDatePath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-weekly"
+        ],
+        "summary": "Returns timetable for a week and all rooms"
+      }
+    },
+    "/plans/weekly/{date}/rooms/{roomID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/WeekDatePath"
+        },
+        {
+          "$ref": "#/components/parameters/RoomIdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "plan-weekly"
+        ],
+        "summary": "Returns timetable for a week and room"
       }
     },
     "/plans/weekly/today/rooms": {
@@ -486,27 +507,6 @@
           "plan-weekly"
         ],
         "summary": "Returns timetable for this week and room"
-      }
-    },
-    "/plans/weekly/today/teachers": {
-      "get": {
-        "tags": [
-          "plan-weekly"
-        ],
-        "summary": "Returns timetable for this week and all teachers"
-      }
-    },
-    "/plans/weekly/today/teachers/{id}": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/TeacherIdPath"
-        }
-      ],
-      "get": {
-        "tags": [
-          "plan-weekly"
-        ],
-        "summary": "Returns timetable for this week and teacher"
       }
     },
     "/rooms/availability/today": {

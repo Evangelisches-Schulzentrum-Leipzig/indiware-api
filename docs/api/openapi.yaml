@@ -8,20 +8,55 @@ info:
   license:
     name: Open Source License 3.0
     url: https://opensource.org/license/osl-3-0
-  version: 0.0.1
+  version: 0.0.2
 servers:
   - url: https://secure-gateway.schulzentrum.de/api/v1/timetable
+tags:
+  - name: metadata
+    description: Metadata Endpoints
+  - name: plan-daily
+    description: Daily Timetable Plan Endpoints
+  - name: plan-weekly
+    description: Weekly Timetable Plan Endpoints
+  - name: roomavailability
+    description: Room Availability Endpoints
 paths:
-  /classes:
+  /metadata/classes:
     get:
+      tags:
+        - metadata
       summary: Returns list of all classes
-  /rooms:
+  /metadata/rooms:
     get:
+      tags:
+        - metadata
       summary: Returns list of all rooms
-  /teachers:
+  /metadata/teachers:
     get:
+      tags:
+        - metadata
       summary: Returns list of all teachers
-  /plans/{date}/classes/{id}:
+  /metadata/holidays:
+    get:
+      tags:
+        - metadata
+      summary: Returns all holidays with dates
+  /metadata/dates:
+    get:
+      tags:
+        - metadata
+      summary: Returns all dates with status 
+  /metadata/periods:
+    get:
+      tags:
+        - metadata
+      summary: Returns all periods with times
+  /metadata/subjects:
+    get:
+      tags:
+        - metadata
+      summary: Returns a list of all subjects
+  /plans/daily/{date}/classes/changes:
     parameters:
       - name: date
         description: Date for requested timetable
@@ -29,6 +64,59 @@ paths:
         required: true
         schema:
           type: string
+          format: date
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable changes for a specific date grouped by class
+  /plans/daily/{date}/teachers/changes:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable changes for a specific date grouped by teacher
+  /plans/daily/{date}/rooms/changes:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable changes for a specific date grouped by room 
+  /plans/daily/{date}/classes:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for a specific date and all classes
+  /plans/daily/{date}/classes/{id}:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
       - name: id
         description: ID of a specific class
         in: path
@@ -36,4 +124,368 @@ paths:
         schema: 
           type: integer
     get:
+      tags:
+        - plan-daily
       summary: Returns timetable for a specific date and class
+  /plans/daily/{date}/rooms:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for a specific date and all rooms
+  /plans/daily/{date}/rooms/{id}:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: id
+        description: ID of a specific room
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for a specific date and room
+  /plans/daily/{date}/teachers:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for a specific date and all teachers
+  /plans/daily/{date}/teachers/{id}:
+    parameters:
+      - name: date
+        description: Date for requested timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: id
+        description: ID of a specific teacher
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for a specific date and teacher
+  /plans/daily/today/classes/changes:
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable changes for today grouped by class
+  /plans/daily/today/teachers/changes:
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable changes for today grouped by teacher
+  /plans/daily/today/rooms/changes:
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable changes for today grouped by room
+  /plans/daily/today/classes:
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for today and all classes
+  /plans/daily/today/classes/{id}:
+    parameters:
+      - name: id
+        description: ID of a specific class
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for today and class
+  /plans/daily/today/rooms:
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for today and all rooms
+  /plans/daily/today/rooms/{id}:
+    parameters:
+      - name: id
+        description: ID of a specific room
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for today and room
+  /plans/daily/today/teachers:
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for today and all teachers
+  /plans/daily/today/teachers/{id}:
+    parameters:
+      - name: id
+        description: ID of a specific teacher
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-daily
+      summary: Returns timetable for today and teacher
+  /plans/weekly/{date}/teachers/changes:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable changes for a week grouped by teacher
+  /plans/weekly/{date}/rooms/changes:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable changes for a week grouped by room 
+  /plans/weekly/{date}/classes:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for a week and all classes
+  /plans/weekly/{date}/classes/{id}:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: id
+        description: ID of a specific class
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for a week and class
+  /plans/weekly/{date}/rooms:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for a week and all rooms
+  /plans/weekly/{date}/rooms/{id}:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: id
+        description: ID of a specific room
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for a week and room
+  /plans/weekly/{date}/teachers:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for a week and all teachers
+  /plans/weekly/{date}/teachers/{id}:
+    parameters:
+      - name: date
+        description: Date that is inside requested week timetable
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: id
+        description: ID of a specific teacher
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for a week and teacher
+  /plans/weekly/today/teachers/changes:
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable changes for this week grouped by teacher
+  /plans/weekly/today/rooms/changes:
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable changes for this week grouped by room
+  /plans/weekly/today/classes:
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for this week and all classes
+  /plans/weekly/today/classes/{id}:
+    parameters:
+      - name: id
+        description: ID of a specific class
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for this week and class
+  /plans/weekly/today/rooms:
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for this week and all rooms
+  /plans/weekly/today/rooms/{id}:
+    parameters:
+      - name: id
+        description: ID of a specific room
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for this week and room
+  /plans/weekly/today/teachers:
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for this week and all teachers
+  /plans/weekly/today/teachers/{id}:
+    parameters:
+      - name: id
+        description: ID of a specific teacher
+        in: path
+        required: true
+        schema: 
+          type: integer
+    get:
+      tags:
+        - plan-weekly
+      summary: Returns timetable for this week and teacher
+  /rooms/availability/today:
+    get:
+      tags:
+        - roomavailability
+      summary: Returns availability of all rooms for today
+  /rooms/{roomID}/availability/today:
+    parameters:
+      - name: roomID
+        description: ID of a specific room
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - roomavailability
+      summary: Returns availability of a specific room for today
+  /rooms/availability/{date}:
+    parameters:
+      - name: date
+        description: Date for requested room availability
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - roomavailability
+      summary: Returns availability of all rooms for a specific date
+  /rooms/{roomID}/availability/{date}:
+    parameters:
+      - name: roomID
+        description: ID of a specific room
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: date
+        description: Date for requested room availability
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+    get:
+      tags:
+        - roomavailability
+      summary: Returns availability of a specific room for a specific date

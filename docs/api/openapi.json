@@ -31,7 +31,7 @@
       "description": "Weekly Timetable Plan Endpoints"
     },
     {
-      "name": "roomavailability",
+      "name": "room-availability",
       "description": "Room Availability Endpoints"
     }
   ],
@@ -509,15 +509,15 @@
         "summary": "Returns timetable for this week and room"
       }
     },
-    "/rooms/availability/today": {
+    "/availability/today/rooms": {
       "get": {
         "tags": [
-          "roomavailability"
+          "room-availability"
         ],
         "summary": "Returns availability of all rooms for today"
       }
     },
-    "/rooms/{roomID}/availability/today": {
+    "/availability/today/rooms/{roomID}": {
       "parameters": [
         {
           "$ref": "#/components/parameters/RoomIdPath"
@@ -525,12 +525,12 @@
       ],
       "get": {
         "tags": [
-          "roomavailability"
+          "room-availability"
         ],
         "summary": "Returns availability of a specific room for today"
       }
     },
-    "/rooms/availability/{date}": {
+    "/availability/{date}/rooms": {
       "parameters": [
         {
           "$ref": "#/components/parameters/DatePath"
@@ -538,12 +538,12 @@
       ],
       "get": {
         "tags": [
-          "roomavailability"
+          "room-availability"
         ],
         "summary": "Returns availability of all rooms for a specific date"
       }
     },
-    "/rooms/{roomID}/availability/{date}": {
+    "/availability/{date}/rooms/{roomID}": {
       "parameters": [
         {
           "$ref": "#/components/parameters/RoomIdPath"
@@ -554,7 +554,7 @@
       ],
       "get": {
         "tags": [
-          "roomavailability"
+          "room-availability"
         ],
         "summary": "Returns availability of a specific room for a specific date"
       }

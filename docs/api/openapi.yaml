@@ -1,8 +1,7 @@
 openapi: 3.1.0
 info:
   title: Vertretungsplan API
-  description: |-
-    
+  description: ''
   contact:
     email: support@schulzentrum.de
   license:
@@ -55,13 +54,15 @@ paths:
     get:
       tags:
         - metadata
-      summary: Returns all dates with status 
+      summary: Returns all dates with status
   /metadata/dates/next-school-day:
     get:
       tags:
         - metadata
       summary: Returns the date of the next valid school day
-      description: Returns the date of the next valid school day (skipping weekends and holidays)
+      description: >-
+        Returns the date of the next valid school day (skipping weekends and
+        holidays)
   /metadata/available-dates:
     get:
       tags:
@@ -178,7 +179,7 @@ paths:
     get:
       tags:
         - plan-daily
-      summary: Returns timetable changes for a specific date grouped by room 
+      summary: Returns timetable changes for a specific date grouped by room
   /plans/daily/{date}/rooms:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -367,95 +368,115 @@ components:
         type: string
         format: date-time
   schemas:
-    # --- Core Entities ---
     Teacher:
       type: object
-      required: [id, shortName]
+      required:
+        - id
+        - shortName
       properties:
         id:
           type: integer
-          examples: [101]
+          examples:
+            - 101
         shortName:
           type: string
-          description: "Unique initials or short code of the teacher"
-          examples: ["SMI"]
-
+          description: Unique initials or short code of the teacher
+          examples:
+            - SMI
     Room:
       type: object
-      required: [id, name]
+      required:
+        - id
+        - name
       properties:
         id:
           type: integer
-          examples: [50]
+          examples:
+            - 50
         name:
           type: string
-          description: "Room number or name"
-          examples: ["3.12"]
+          description: Room number or name
+          examples:
+            - '3.12'
         building:
           type: string
-          examples: ["Main Building"]
-
+          examples:
+            - Main Building
     SchoolClass:
       type: object
-      required: [id, name]
+      required:
+        - id
+        - name
       properties:
         id:
           type: integer
-          examples: [12]
+          examples:
+            - 12
         name:
           type: string
-          description: "Grade and identifier"
-          examples: ["10A"]
-
+          description: Grade and identifier
+          examples:
+            - 10A
     Subject:
       type: object
-      required: [id, shortName]
+      required:
+        - id
+        - shortName
       properties:
         id:
           type: integer
-          examples: [5]
+          examples:
+            - 5
         shortName:
           type: string
-          examples: ["MA"]
+          examples:
+            - MA
         longName:
           type: string
-          examples: ["Mathematics"]
-
-    # --- Schedule Metadata ---
+          examples:
+            - Mathematics
     Period:
       type: object
-      required: [id, startTime, endTime]
+      required:
+        - id
+        - startTime
+        - endTime
       properties:
         id:
           type: integer
-          description: "The lesson number"
-          examples: [1]
+          description: The lesson number
+          examples:
+            - 1
         startTime:
           type: string
-          pattern: '^([01]\d|2[0-3]):?([0-5]\d)$'
-          examples: ["08:00"]
+          pattern: ^([01]\d|2[0-3]):?([0-5]\d)$
+          examples:
+            - '08:00'
         endTime:
           type: string
-          pattern: '^([01]\d|2[0-3]):?([0-5]\d)$'
-          examples: ["08:45"]
-
+          pattern: ^([01]\d|2[0-3]):?([0-5]\d)$
+          examples:
+            - '08:45'
     Holiday:
       type: object
       properties:
         name:
           type: string
-          examples: ["Christmas Break"]
+          examples:
+            - Christmas Break
         startDate:
           type: string
           format: date
         endDate:
           type: string
           format: date
-
-    # --- Timetable Logic ---
     TimetableEntry:
       type: object
-      required: [id, date, period, status]
+      required:
+        - id
+        - date
+        - period
+        - status
       properties:
         id:
           type: integer
@@ -476,11 +497,16 @@ components:
             $ref: '#/components/schemas/SchoolClass'
         status:
           type: string
-          description: "Current state of the lesson"
-          enum: [scheduled, substituted, cancelled, time_change, room_change]
+          description: Current state of the lesson
+          enum:
+            - scheduled
+            - substituted
+            - cancelled
+            - time_change
+            - room_change
         substitutionInfo:
           type: object
-          description: "Details if the lesson is not 'scheduled'"
+          description: Details if the lesson is not 'scheduled'
           properties:
             originalTeacher:
               $ref: '#/components/schemas/Teacher'
@@ -488,12 +514,12 @@ components:
               $ref: '#/components/schemas/Room'
             changeReason:
               type: string
-              examples: ["Illness"]
+              examples:
+                - Illness
             notes:
               type: string
-              examples: ["Work on textbook page 45"]
-
-    # --- Availability Logic ---
+              examples:
+                - Work on textbook page 45
     RoomAvailability:
       type: object
       properties:
@@ -511,14 +537,12 @@ components:
                 type: integer
               startTime:
                 type: string
-                pattern: '^([01]\d|2[0-3]):?([0-5]\d)$'
+                pattern: ^([01]\d|2[0-3]):?([0-5]\d)$
               endTime:
                 type: string
-                pattern: '^([01]\d|2[0-3]):?([0-5]\d)$'
+                pattern: ^([01]\d|2[0-3]):?([0-5]\d)$
               isAvailable:
                 type: boolean
-
-    # --- Response Wrappers ---
     PlanResponse:
       type: object
       properties:

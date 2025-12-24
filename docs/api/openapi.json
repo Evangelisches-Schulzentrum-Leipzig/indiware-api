@@ -44,7 +44,22 @@
         "tags": [
           "metadata"
         ],
-        "summary": "Returns list of all classes"
+        "summary": "Returns list of all classes",
+        "responses": {
+          "200": {
+            "description": "A list of classes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SchoolClass"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/metadata/classes/groups": {
@@ -60,7 +75,22 @@
         "tags": [
           "metadata"
         ],
-        "summary": "Returns a list of all subjects"
+        "summary": "Returns a list of all subjects",
+        "responses": {
+          "200": {
+            "description": "A list of subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Subject"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/metadata/subjects/groups": {
@@ -76,7 +106,22 @@
         "tags": [
           "metadata"
         ],
-        "summary": "Returns list of all rooms"
+        "summary": "Returns list of all rooms",
+        "responses": {
+          "200": {
+            "description": "A list of subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Room"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/metadata/teachers": {
@@ -84,7 +129,22 @@
         "tags": [
           "metadata"
         ],
-        "summary": "Returns list of all teachers"
+        "summary": "Returns list of all teachers",
+        "responses": {
+          "200": {
+            "description": "A list of teachers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Teacher"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/metadata/dates": {

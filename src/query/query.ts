@@ -48,7 +48,6 @@ function parseXmlFile(file: string): parsedData {
     var teacherSwitch = parsed.VpMobil[0].Kopf[0].planart[0]._text[0] == "L";
 
     var holidayDays = parsed.VpMobil[0].FreieTage[0].ft.map(fd => fd._text[0] || '').filter(fd => fd !== '').map(fd => '20' + fd.slice(0, 2) + '-' + fd.slice(2, 4) + '-' + fd.slice(4, 6));
-    console.log('Found holiday days: ', holidayDays);
 
     // Donnerstag, 05. September 2019
     var planDate = parsed.VpMobil[0].Kopf[0].DatumPlan[0]._text[0] || '';
@@ -71,17 +70,14 @@ function parseXmlFile(file: string): parsedData {
     var month = monthMap[dateParts[1]];
     var year = dateParts[2];
     var isoDate = new Date(year + '-' + month + '-' + day).toISOString().slice(0, 10);
-    console.log('Plan date: ', isoDate);
 
     // 18.12.2025, 09:50
     var timeStamp = parsed.VpMobil[0].Kopf[0].zeitstempel[0]._text[0] || '';
     var date = timeStamp.split(', ')[0].split('.').map((part) => part.padStart(2, '0')).reverse().join('-');
     var time = timeStamp.split(', ')[1] + ":00";
     var isoTimestamp = new Date(date + 'T' + time).toISOString();
-    console.log('Timestamp: ', isoTimestamp);
 
     var classes = parsed.VpMobil[0].Klassen[0].Kl.map(cl => cl.Kurz[0]._text[0] || '').filter(cn => cn !== '');
-    console.log('Found classes: ', classes);
 
     var subjectsSet = new Set<string>();
     parsed.VpMobil[0].Klassen[0].Kl.forEach(cl => {
@@ -93,7 +89,7 @@ function parseXmlFile(file: string): parsedData {
         });
     });
     var subjects = Array.from(subjectsSet);
-    console.log('Found subjects: ', subjects);
+    subjects.sort();
 
     var roomsSet = new Set<string>();
     parsed.VpMobil[0].Klassen[0].Kl.forEach(cl => {
@@ -105,7 +101,7 @@ function parseXmlFile(file: string): parsedData {
         });
     });
     var rooms = Array.from(roomsSet);
-    console.log('Found rooms: ', rooms);
+    rooms.sort();
 
     var teachersSet = new Set<string>();
     parsed.VpMobil[0].Klassen[0].Kl.forEach(cl => {
@@ -117,7 +113,7 @@ function parseXmlFile(file: string): parsedData {
         });
     });
     var teachers = Array.from(teachersSet);
-    console.log('Found teachers: ', teachers);
+    teachers.sort();
 
     var periods: {start: string, end: string}[] = [];
     parsed.VpMobil[0].Klassen[0].Kl.forEach(cl => {
@@ -132,14 +128,12 @@ function parseXmlFile(file: string): parsedData {
             }
         });
     });
-    console.log('Found periods: ', periods);
 
     // Switch classes and teachers if data is for teachers
     if (teacherSwitch) {
         var temp = classes;
         classes = teachers;
         teachers = temp;
-        console.log('Switched classes and teachers due to planart L');
     }   
 
     // group holiday days into ranges
@@ -165,7 +159,6 @@ function parseXmlFile(file: string): parsedData {
         holidayRanges.push({ start: start, end: end });
         i = j;
     }
-    console.log('Holiday ranges: ', holidayRanges);
 
     // split classes into single classes
     // e.g. "10a,10b,10c" -> ["10a", "10b", "10c"], 
@@ -201,7 +194,6 @@ function parseXmlFile(file: string): parsedData {
         }
     });
     expandedClasses = Array.from(new Set(expandedClasses)).sort(); // remove duplicates
-    console.log('Expanded classes: ', expandedClasses);
 
     var plans = parsePlan(parsed.VpMobil[0].Klassen[0].Kl, teacherSwitch);
     plans.forEach(p => p.day = isoDate);

@@ -1,5 +1,30 @@
 {
+  "name": "timetable-openapi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpenAPI for our Timetable (Vertretungsplan) data.",
+  "license": "OSL 3.0",
+  "type": "module",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && node .\\dist\\api.js",
+    "start": "node .\\dist\\api.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mariadb": "^3.2.0"
+  },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
 }

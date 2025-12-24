@@ -9,6 +9,7 @@ info:
     url: https://opensource.org/license/osl-3-0
   version: 0.0.5
 servers:
+  - url: http://localhost:80
   - url: https://secure-gateway.schulzentrum.de/api/v1/timetable
 tags:
   - name: metadata

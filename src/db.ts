@@ -33,7 +33,7 @@ const pool = mariadb.createPool({
     port: Number(process.env.DB_PORT ?? 3306),
     user: process.env.DB_USER ?? '',
     password: process.env.DB_PASSWORD ?? '',
-    database: process.env.DB_NAME ?? 'timetable',
+    database: process.env.DB_NAME ?? 'timetable_v2',
     compress: true
 });
 
@@ -57,11 +57,11 @@ export async function querySubjects(): Promise<{id: BigInt, short_name: string, 
     }
 }
 
-export async function queryRooms(): Promise<{id: BigInt, name: string, description: string, building: string, level: string, address: string, capacity: number, features: string}[]> {
+export async function queryRooms(): Promise<{id: number, name: string, building: string, level: string, address: string}[]> {
     const conn = await pool.getConnection();
     try {
-        const rows = await conn.query("SELECT id, name, description, building, level, address, capacity, features FROM rooms;");
-        return Array.isArray(rows) ? (rows as {id: BigInt, name: string, description: string, building: string, level: string, address: string, capacity: number, features: string}[]) : [];
+        const rows = await conn.query(`SELECT r.id, r.name, b.name AS building, r.level, b.address FROM rooms r INNER JOIN buildings b ON r.building_id = b.id;`);
+        return Array.isArray(rows) ? (rows as {id: number, name: string, building: string, level: string, address: string}[]) : [];
     } finally {
         conn.release();
     }
@@ -80,8 +80,8 @@ export async function queryTeachers(): Promise<{id: BigInt, short_name: string}[
 export async function queryAvailableDates(): Promise<string[]> {
     const conn = await pool.getConnection();
     try {
-        const rows = await conn.query("SELECT DISTINCT day FROM timetable_entries ORDER BY day;");
-        return Array.isArray(rows) ? (rows as {day: string}[]).map(r => r.day) : [];
+        const rows = await conn.query("SELECT DISTINCT date FROM timetable_instances ORDER BY date;");
+        return Array.isArray(rows) ? (rows as {date: string}[]).map(r => r.date) : [];
     } finally {
         conn.release();
     }
@@ -90,9 +90,9 @@ export async function queryAvailableDates(): Promise<string[]> {
 export async function queryLatestDate(): Promise<string | null> {
     const conn = await pool.getConnection();
     try {
-        const rows = await conn.query("SELECT day FROM timetable_entries ORDER BY day DESC LIMIT 1;");
+        const rows = await conn.query("SELECT date FROM timetable_instances ORDER BY date DESC LIMIT 1;");
         if (Array.isArray(rows) && rows.length > 0) {
-            return (rows[0] as {day: string}).day;
+            return (rows[0] as {date: string}).date;
         } else {
             return null;
         }
@@ -178,33 +178,86 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
 
         // Batch insert holidays
         if (data.holidayRanges.length > 0) {
-            const holidayValues = data.holidayRanges.map((holiday, index) => [index, holiday.start, holiday.end]);
-            await conn.batch("INSERT INTO holidays (name, start_date, end_date) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), end_date = VALUES(end_date);", holidayValues);
+            const holidayValues = data.holidayRanges.map(holiday => [holiday.start, holiday.end, holiday.start]);
+            await conn.batch("INSERT INTO holidays (start_date, end_date, name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), end_date = VALUES(end_date);", holidayValues);
         }
 
-        // Batch insert plans
+        // Batch insert lesson definitions
+        const lessonDefinitions = data.plans.map(plan => [
+            subjectsMap[plan.subject] ?? null,
+            teachersMap[plan.teacher] ?? null,
+            roomsMap[plan.room] ?? null
+        ]);
+        await conn.batch(
+            `INSERT INTO lesson_definitions (subject_id, teacher_id, room_id) 
+             VALUES (?, ?, ?) 
+             ON DUPLICATE KEY UPDATE subject_id = VALUES(subject_id), teacher_id = VALUES(teacher_id), room_id = VALUES(room_id);`,
+            lessonDefinitions
+        );
+
+        // Map lesson definitions to their IDs
+        const lessonDefinitionRows = await conn.query(
+            `SELECT id, subject_id, teacher_id, room_id 
+             FROM lesson_definitions 
+             WHERE (subject_id, teacher_id, room_id) IN (${lessonDefinitions
+                 .map(() => '(?, ?, ?)')
+                 .join(', ')})`,
+            lessonDefinitions.flat()
+        );
+        const lessonDefinitionsMap: { [key: string]: number } = {};
+        for (const row of lessonDefinitionRows as { id: number, subject_id: number, teacher_id: number, room_id: number }[]) {
+            const key = `${row.subject_id}-${row.teacher_id}-${row.room_id}`;
+            lessonDefinitionsMap[key] = row.id;
+        }
+
+        // Batch insert timetable instances
         if (data.plans.length > 0) {
-            const planValues = data.plans.map(plan => [
-                plan.day,
-                plan.period,
-                classesMap[plan.className] == undefined ? 1 : classesMap[plan.className],
-                plan.teacherChanged ? teachersMap[plan.teacher] : null,
-                subjectsMap[plan.subject],
-                plan.roomChanged ? roomsMap[plan.room] : null,
-                plan.teacherChanged ? null : teachersMap[plan.teacher],
-                plan.roomChanged ? null : roomsMap[plan.room],
-                plan.changeDetails
-            ]);
-            await conn.batch(`INSERT INTO timetable_entries (day, period_number, class_id, subject_id, teacher_id, room_id, original_teacher_id, original_room_id, substitution_notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE substitution_notes = VALUES(substitution_notes);`, planValues);
+            const timetableValues = data.plans.map(plan => {
+                const definitionKey = `${subjectsMap[plan.subject] ?? null}-${teachersMap[plan.teacher] ?? null}-${roomsMap[plan.room] ?? null}`;
+                return [
+                    plan.day,
+                    plan.period,
+                    lessonDefinitionsMap[definitionKey] ?? null,
+                    'scheduled'
+                ];
+            });
+            await conn.batch(
+                `INSERT INTO timetable_instances (date, period_number, definition_id, status) 
+                 VALUES (?, ?, ?, ?) 
+                 ON DUPLICATE KEY UPDATE status = VALUES(status);`,
+                timetableValues
+            );
+        }
+
+        // Batch insert substitution details
+        const substitutionValues = data.plans
+            .filter(plan => plan.teacherChanged || plan.roomChanged)
+            .map(plan => {
+                const definitionKey = `${subjectsMap[plan.subject] ?? null}-${teachersMap[plan.teacher] ?? null}-${roomsMap[plan.room] ?? null}`;
+                return [
+                    plan.day,
+                    lessonDefinitionsMap[definitionKey] ?? null,
+                    plan.teacherChanged ? teachersMap[plan.teacher] : null,
+                    plan.roomChanged ? roomsMap[plan.room] : null,
+                    plan.changeDetails
+                ];
+            });
+        if (substitutionValues.length > 0) {
+            await conn.batch(
+                `INSERT INTO substitution_details (instance_date, instance_id, original_teacher_id, original_room_id, change_reason) 
+                 VALUES (?, ?, ?, ?, ?) 
+                 ON DUPLICATE KEY UPDATE original_teacher_id = VALUES(original_teacher_id), original_room_id = VALUES(original_room_id), change_reason = VALUES(change_reason);`,
+                substitutionValues
+            );
         }
 
         await conn.commit();
     } catch (error) {
         await conn.rollback();
         throw error;
+    } finally {
+        conn.release();
     }
-
-    conn.release();
 }
 
 export async function close(): Promise<void> {

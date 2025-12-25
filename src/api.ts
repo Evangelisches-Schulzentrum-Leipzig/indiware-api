@@ -42,7 +42,7 @@ app.get('/metadata/subjects', async (req, res) => {
 app.get('/metadata/rooms', async (req, res) => {
     try {
         const rooms = await queryRooms();
-        res.json(rooms.map(r => ({ id: r.id.toString(), name: r.name, description: r.description, building: r.building, level: r.level, address: r.address, capacity: r.capacity, features: r.features })));
+        res.json(rooms.map(r => ({ id: r.id.toString(), name: r.name, building: r.building, level: r.level, address: r.address })));
     } catch (error) {
         console.log((error as Error).message);
         res.status(500).json({ error: 'Internal Server Error' });

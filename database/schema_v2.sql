@@ -86,9 +86,12 @@ CREATE TABLE timetable_instances (
     -- Invisible columns for internal auditing without polluting API responses
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP INVISIBLE,
     
-    PRIMARY KEY (id, date), -- Date must be part of PK for partitioning
-    INDEX idx_date_period (date, period_number),
-    CONSTRAINT fk_ti_per FOREIGN KEY (period_number) REFERENCES periods(number),
+    -- Optimization: Virtual column for Day of Week (0 space usage)
+    day_of_week TINYINT AS (DAYOFWEEK(date)) VIRTUAL,
+
+    -- Optimization: PK flipped to (date, id) for physical data locality
+    PRIMARY KEY (date, id, period_number), 
+    CONSTRAINT fk_ti_per FOREIGN KEY (period_number) REFERENCES periods(number),    
     CONSTRAINT fk_ti_def FOREIGN KEY (definition_id) REFERENCES lesson_definitions(id)
 ) 
 ENGINE=InnoDB 
@@ -103,12 +106,12 @@ CREATE TABLE substitution_details (
     instance_date DATE NOT NULL,
     original_teacher_id SMALLINT UNSIGNED NULL,
     original_room_id SMALLINT UNSIGNED NULL,
-    change_reason VARCHAR(255) NULL,
-    notes TEXT NULL,
+    change_reason VARCHAR(255) COMPRESSED=zstd NULL,
+    notes TEXT COMPRESSED=zstd NULL,
     
-    PRIMARY KEY (instance_id, instance_date),
-    CONSTRAINT fk_sub_inst FOREIGN KEY (instance_id, instance_date) 
-        REFERENCES timetable_instances(id, date) ON DELETE CASCADE
+    PRIMARY KEY (instance_date, instance_id),
+    CONSTRAINT fk_sub_inst FOREIGN KEY (instance_date, instance_id) 
+        REFERENCES timetable_instances(date, id) ON DELETE CASCADE
 ) 
 ENGINE=InnoDB 
 WITH SYSTEM VERSIONING 

@@ -47,6 +47,80 @@ export async function queryClasses(): Promise<{id: BigInt, name: string}[]> {
     }
 }
 
+export async function querySubjects(): Promise<{id: BigInt, short_name: string, long_name: string}[]> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT id, short_name, long_name FROM subjects;");
+        return Array.isArray(rows) ? (rows as {id: BigInt, short_name: string, long_name: string}[]) : [];
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryRooms(): Promise<{id: BigInt, name: string, description: string, building: string, level: string, address: string, capacity: number, features: string}[]> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT id, name, description, building, level, address, capacity, features FROM rooms;");
+        return Array.isArray(rows) ? (rows as {id: BigInt, name: string, description: string, building: string, level: string, address: string, capacity: number, features: string}[]) : [];
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryTeachers(): Promise<{id: BigInt, short_name: string}[]> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT id, short_name FROM teachers;");
+        return Array.isArray(rows) ? (rows as {id: BigInt, short_name: string}[]) : [];
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryAvailableDates(): Promise<string[]> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT DISTINCT day FROM timetable_entries ORDER BY day;");
+        return Array.isArray(rows) ? (rows as {day: string}[]).map(r => r.day) : [];
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryLatestDate(): Promise<string | null> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT day FROM timetable_entries ORDER BY day DESC LIMIT 1;");
+        if (Array.isArray(rows) && rows.length > 0) {
+            return (rows[0] as {day: string}).day;
+        } else {
+            return null;
+        }
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryHolidays(): Promise<{id: BigInt, name: string, start_date: string, end_date: string}[]> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT id, name, start_date, end_date FROM holidays;");
+        return Array.isArray(rows) ? (rows as {id: BigInt, name: string, start_date: string, end_date: string}[]) : [];
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryPeriods(): Promise<{number: number, start_time: string, end_time: string}[]> {
+    const conn = await pool.getConnection();
+    try {
+        const rows = await conn.query("SELECT number, start_time, end_time FROM periods ORDER BY number;");
+        return Array.isArray(rows) ? (rows as {number: number, start_time: string, end_time: string}[]) : [];
+    } finally {
+        conn.release();
+    }
+}
+
 export async function updateQueryResults(data: parsedData): Promise<void> {
     const conn = await pool.getConnection();
     try {

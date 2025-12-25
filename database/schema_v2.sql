@@ -1,9 +1,9 @@
 -- MariaDB 12+
-CREATE DATABASE IF NOT EXISTS school_timetable_v2 
+CREATE DATABASE IF NOT EXISTS timetable_v2 
     CHARACTER SET utf8mb4 
     COLLATE utf8mb4_unicode_ci;
 
-USE school_timetable_v2;
+USE timetable_v2;
 
 -- ==========================================
 -- 1. STATIC METADATA (Lookups)

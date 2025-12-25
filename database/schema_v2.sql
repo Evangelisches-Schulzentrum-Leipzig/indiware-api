@@ -1,4 +1,4 @@
--- MariaDB 11/12+ Optimized Schema
+-- MariaDB 12+
 CREATE DATABASE IF NOT EXISTS school_timetable_v2 
     CHARACTER SET utf8mb4 
     COLLATE utf8mb4_unicode_ci;
@@ -22,8 +22,8 @@ CREATE TABLE subjects (
 
 CREATE TABLE buildings (
     id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(64) NOT NULL UNIQUE,       -- e.g., "Main Building"
-    address VARCHAR(255) NULL,              -- e.g., "123 School Lane"
+    name VARCHAR(64) NOT NULL UNIQUE,
+    address VARCHAR(255) NULL
 ) ENGINE=InnoDB PAGE_COMPRESSED=1;
 
 CREATE TABLE rooms (
@@ -71,36 +71,31 @@ CREATE TABLE lesson_classes (
 ) ENGINE=InnoDB;
 
 -- ==========================================
--- 3. VERSIONED & PARTITIONED DATA (The "Hot" Plan)
+-- 3. PLAN DATA (The "Hot" Tables)
 -- ==========================================
 
--- This table tracks every change automatically via System Versioning
--- It is partitioned by year to keep queries fast as history grows
 CREATE TABLE timetable_instances (
     id INT UNSIGNED NOT NULL,
     date DATE NOT NULL,
     period_number TINYINT UNSIGNED NOT NULL,
     definition_id INT UNSIGNED NOT NULL,
-    status ENUM('scheduled', 'substituted', 'cancelled', 'time_change', 'room_change') DEFAULT 'scheduled',
+    status ENUM('scheduled', 'substituted', 'cancelled', 'time_change', 'room_change', 'exam') DEFAULT 'scheduled',
     
     -- Invisible columns for internal auditing without polluting API responses
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP INVISIBLE,
-    
-    -- Optimization: Virtual column for Day of Week (0 space usage)
     day_of_week TINYINT AS (DAYOFWEEK(date)) VIRTUAL,
 
-    -- Optimization: PK flipped to (date, id) for physical data locality
     PRIMARY KEY (date, id, period_number), 
+    INDEX idx_lookup_date_class (date, period_number), -- Faster daily plan lookups
     CONSTRAINT fk_ti_per FOREIGN KEY (period_number) REFERENCES periods(number),    
     CONSTRAINT fk_ti_def FOREIGN KEY (definition_id) REFERENCES lesson_definitions(id)
 ) 
 ENGINE=InnoDB 
-WITH SYSTEM VERSIONING -- Optimization: Auto-track substitutions history
--- AUTOMATION: This creates a new partition for every 1 year automatically
+WITH SYSTEM VERSIONING 
 PARTITION BY RANGE (YEAR(date)) 
 INTERVAL (1) FIRST PARTITION START ('2024-01-01') LAST PARTITION END ('2026-01-01');
 
--- Separate table for extra substitution info, also versioned
+-- Separate table for extra substitution info
 CREATE TABLE substitution_details (
     instance_id INT UNSIGNED NOT NULL,
     instance_date DATE NOT NULL,
@@ -110,15 +105,28 @@ CREATE TABLE substitution_details (
     notes TEXT COMPRESSED=zstd NULL,
     
     PRIMARY KEY (instance_date, instance_id),
-    CONSTRAINT fk_sub_inst FOREIGN KEY (instance_date, instance_id) 
+    CONSTRAINT fk_det_inst FOREIGN KEY (instance_date, instance_id) 
         REFERENCES timetable_instances(date, id) ON DELETE CASCADE
-) 
-ENGINE=InnoDB 
+) ENGINE=InnoDB WITH SYSTEM VERSIONING PAGE_COMPRESSED=1;
+
+CREATE TABLE supervisions (
+    id INT UNSIGNED AUTO_INCREMENT,
+    date DATE NOT NULL,
+    teacher_id SMALLINT UNSIGNED NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    info_text VARCHAR(255) NULL,
+    
+    PRIMARY KEY (date, id),
+    CONSTRAINT fk_sup_tea FOREIGN KEY (teacher_id) REFERENCES teachers(id)
+) ENGINE=InnoDB 
 WITH SYSTEM VERSIONING 
-PAGE_COMPRESSED=1; -- Optimization: Compress notes/reasons on disk
+PARTITION BY RANGE (YEAR(date)) 
+INTERVAL (1) FIRST PARTITION START ('2024-01-01') LAST PARTITION END ('2026-01-01');
 
 -- ==========================================
--- 4. UTILITY TABLES
+-- 4. UTILITY & HOLIDAYS
 -- ==========================================
 
 CREATE TABLE plan_metadata (
@@ -132,5 +140,6 @@ CREATE TABLE holidays (
     id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     start_date DATE NOT NULL,
-    end_date DATE NOT NULL
+    end_date DATE NOT NULL,
+    INDEX idx_holiday_range (start_date, end_date)
 ) ENGINE=InnoDB;

@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS lesson_classes (
 -- ==========================================
 
 CREATE TABLE IF NOT EXISTS timetable_instances (
-    id INT UNSIGNED NOT NULL,
+    id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY,
     date DATE NOT NULL,
     period_number TINYINT UNSIGNED NOT NULL,
     definition_id INT UNSIGNED NOT NULL,
@@ -85,13 +85,13 @@ CREATE TABLE IF NOT EXISTS timetable_instances (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP INVISIBLE,
     day_of_week TINYINT AS (DAYOFWEEK(date)) VIRTUAL,
 
-    PRIMARY KEY (date, id, period_number), 
+    UNIQUE KEY (date, id, period_number), 
     INDEX idx_lookup_date_class (date, period_number), -- Faster daily plan lookups
     CONSTRAINT fk_ti_per FOREIGN KEY (period_number) REFERENCES periods(number),    
     CONSTRAINT fk_ti_def FOREIGN KEY (definition_id) REFERENCES lesson_definitions(id)
 ) 
-ENGINE=InnoDB 
-WITH SYSTEM VERSIONING 
+ENGINE=InnoDB
+WITH SYSTEM VERSIONING
 PAGE_COMPRESSED=1;
 -- PARTITION BY RANGE (YEAR(date)) (
 --     PARTITION p2024 VALUES LESS THAN (2025),

@@ -105,26 +105,69 @@ paths:
       tags:
         - metadata
       summary: Returns date range for which timetable data is available
+      responses:
+        '200':
+          description: Available dates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: date
   /metadata/latest-date:
     get:
       tags:
         - metadata
       summary: Returns the latest date for which timetable data is available
+      responses:
+        '200':
+          description: Latest available date
+          content:
+            application/json:
+              schema:
+                type: string
+                format: date
   /metadata/holidays:
     get:
       tags:
         - metadata
       summary: Returns all holidays with dates
+      responses:
+        '200':
+          description: A list of holidays
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Holiday'
   /metadata/periods:
     get:
       tags:
         - metadata
       summary: Returns all periods with times
+      responses:
+        '200':
+          description: A list of periods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Period'
   /metadata/current-period:
     get:
       tags:
         - metadata
       summary: Returns the current active lesson period based on server time
+      responses:
+        '200':
+          description: Current active lesson period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Period'
   /metadata/current-period/{timestamp}:
     parameters:
       - $ref: '#/components/parameters/TimestampPath'
@@ -132,6 +175,13 @@ paths:
       tags:
         - metadata
       summary: Returns the current active lesson period based on provided timestamp
+      responses:
+        '200':
+          description: Current active lesson period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Period'
   /plans/daily/{date}/classes/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -398,12 +448,13 @@ components:
         type: integer
     TimestampPath:
       name: timestamp
-      description: Timestamp to check for active lesson period
+      description: Timestamp to check for active lesson period without timezone info
       in: path
       required: true
       schema:
         type: string
         format: date-time
+      example: '2023-10-05T10:15:00'
   schemas:
     Teacher:
       type: object
@@ -475,11 +526,11 @@ components:
     Period:
       type: object
       required:
-        - id
+        - number
         - startTime
         - endTime
       properties:
-        id:
+        number:
           type: integer
           description: The lesson number
           examples:
@@ -497,6 +548,8 @@ components:
     Holiday:
       type: object
       properties:
+        id:
+          type: integer
         name:
           type: string
           examples:

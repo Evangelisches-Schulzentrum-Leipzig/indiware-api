@@ -53,9 +53,9 @@ CREATE TABLE IF NOT EXISTS periods (
 
 CREATE TABLE IF NOT EXISTS lesson_definitions (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    subject_id SMALLINT UNSIGNED NOT NULL,
-    teacher_id SMALLINT UNSIGNED NOT NULL,
-    room_id SMALLINT UNSIGNED NOT NULL,
+    subject_id SMALLINT UNSIGNED NULL,
+    teacher_id SMALLINT UNSIGNED NULL,
+    room_id SMALLINT UNSIGNED NULL,
     CONSTRAINT fk_def_sub FOREIGN KEY (subject_id) REFERENCES subjects(id),
     CONSTRAINT fk_def_tea FOREIGN KEY (teacher_id) REFERENCES teachers(id),
     CONSTRAINT fk_def_roo FOREIGN KEY (room_id) REFERENCES rooms(id),

@@ -1,7 +1,7 @@
 import { xml2js } from 'xml-js'
 import { XmlFileSchema } from './xmlschema'
 
-interface parsedData {
+export interface parsedData {
     planType: string,
     planDate: string,
     timeStamp: string,
@@ -198,6 +198,21 @@ function parseXmlFile(file: string): parsedData {
         }
     });
     expandedClasses = Array.from(new Set(expandedClasses)).sort(); // remove duplicates
+
+    // split teachers into single teachers
+    // e.g. "Bra Mey" -> ["Bra", "Mey"]
+    var expandedTeachers: string[] = [];
+    teachers.forEach(tn => {
+        if (tn.includes(' ')) {
+            var parts = tn.split(' ');
+            parts.forEach(p => {
+                expandedTeachers.push(p.trim());
+            });
+        } else {
+            expandedTeachers.push(tn.trim());
+        }
+    });
+    teachers = Array.from(new Set(expandedTeachers)).sort(); // remove duplicates
 
     var plans = parsePlan(parsed.VpMobil[0].Klassen[0].Kl, teacherSwitch);
     plans.forEach(p => p.day = isoDate);

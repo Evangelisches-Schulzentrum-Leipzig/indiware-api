@@ -1,31 +1,7 @@
 import mariadb from 'mariadb';
 import { config } from 'dotenv';
 
-interface parsedData {
-    planType: string,
-    planDate: string,
-    timeStamp: string,
-    classes: string[],
-    subjects: string[],
-    rooms: string[],
-    teachers: string[],
-    periods: {number: number, start: string, end: string}[],
-    holidayRanges: {start: string, end: string}[],
-    plans: {
-        id: number,
-        day: string,
-        period: number,
-        className: string,
-        classChanged: boolean,
-        teacher: string,
-        teacherChanged: boolean,
-        subject: string,
-        subjectChanged: boolean,
-        room: string,
-        roomChanged: boolean,
-        changeDetails: string
-    }[]
-}
+import { parsedData } from './query/query.js';
 
 config();
 

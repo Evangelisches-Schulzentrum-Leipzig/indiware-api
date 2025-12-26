@@ -35,11 +35,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SchoolClass'
-  /metadata/classes/groups:
-    get:
-      tags:
-        - metadata
-      summary: Returns list of all class groups
   /metadata/subjects:
     get:
       tags:
@@ -54,11 +49,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Subject'
-  /metadata/subjects/groups:
-    get:
-      tags:
-        - metadata
-      summary: Returns a list of all subject groups
   /metadata/rooms:
     get:
       tags:

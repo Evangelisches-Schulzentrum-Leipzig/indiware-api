@@ -1,13 +1,13 @@
 openapi: 3.1.0
 info:
   title: Vertretungsplan API
-  description: ''
+  description: API for accessing school timetable data, substitution plans, and room availability information.
   contact:
     email: support@schulzentrum.de
   license:
     name: Open Source License 3.0
     url: https://opensource.org/license/osl-3-0
-  version: 0.0.5
+  version: 1.0.0
 servers:
   - url: http://localhost:80
   - url: https://secure-gateway.schulzentrum.de/api/v1/timetable
@@ -35,6 +35,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SchoolClass'
+        '500':
+          description: Internal Server Error
   /metadata/subjects:
     get:
       tags:
@@ -49,6 +51,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Subject'
+        '500':
+          description: Internal Server Error
   /metadata/rooms:
     get:
       tags:
@@ -63,6 +67,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Room'
+        '500':
+          description: Internal Server Error
   /metadata/teachers:
     get:
       tags:
@@ -77,11 +83,35 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Teacher'
+        '500':
+          description: Internal Server Error
   /metadata/dates:
     get:
       tags:
         - metadata
       summary: Returns all dates with status
+      responses:
+        '200':
+          description: A list of dates with status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    status:
+                      type: string
+                      description: Status of the date
+                      enum:
+                        - school_day
+                        - weekend
+                        - holiday
+        '500':
+          description: Internal Server Error
   /metadata/dates/next-school-day:
     get:
       tags:
@@ -90,6 +120,16 @@ paths:
       description: >-
         Returns the date of the next valid school day (skipping weekends and
         holidays)
+      responses:
+        '200':
+          description: Next school day date
+          content:
+            application/json:
+              schema:
+                type: string
+                format: date
+        '500':
+          description: Internal Server Error
   /metadata/available-dates:
     get:
       tags:
@@ -105,6 +145,8 @@ paths:
                 items:
                   type: string
                   format: date
+        '500':
+          description: Internal Server Error
   /metadata/latest-date:
     get:
       tags:
@@ -118,6 +160,8 @@ paths:
               schema:
                 type: string
                 format: date
+        '500':
+          description: Internal Server Error
   /metadata/holidays:
     get:
       tags:
@@ -132,6 +176,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Holiday'
+        '500':
+          description: Internal Server Error
   /metadata/periods:
     get:
       tags:
@@ -146,6 +192,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Period'
+        '500':
+          description: Internal Server Error
   /metadata/current-period:
     get:
       tags:
@@ -158,6 +206,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Period'
+        '404':
+          description: No active period at current time
+        '500':
+          description: Internal Server Error
   /metadata/current-period/{timestamp}:
     parameters:
       - $ref: '#/components/parameters/TimestampPath'
@@ -172,6 +224,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Period'
+        '400':
+          description: Invalid timestamp format
+        '404':
+          description: No active period at specified time
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/classes/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -179,6 +237,17 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable changes for a specific date grouped by class
+      responses:
+        '200':
+          description: Timetable changes for the specified date grouped by class
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/classes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -223,6 +292,15 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable changes for today grouped by class
+      responses:
+        '200':
+          description: Timetable changes for today grouped by class
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '500':
+          description: Internal Server Error
   /plans/daily/today/classes:
     get:
       tags:
@@ -251,6 +329,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid class ID format
         '404':
           description: Class not found
         '500':
@@ -262,6 +342,17 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable changes for a specific date grouped by teacher
+      responses:
+        '200':
+          description: Timetable changes for the specified date grouped by teacher
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/teachers:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -306,6 +397,15 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable changes for today grouped by teacher
+      responses:
+        '200':
+          description: Timetable changes for today grouped by teacher
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '500':
+          description: Internal Server Error
   /plans/daily/today/teachers:
     get:
       tags:
@@ -334,6 +434,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid teacher ID format
         '404':
           description: Teacher not found
         '500':
@@ -345,6 +447,17 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable changes for a specific date grouped by room
+      responses:
+        '200':
+          description: Timetable changes for the specified date grouped by room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/rooms:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -363,7 +476,7 @@ paths:
           description: Invalid date format
         '500':
           description: Internal Server Error
-  /plans/daily/{date}/rooms/{roomID}:
+  /plans/daily/{date}/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
       - $ref: '#/components/parameters/RoomIdPath'
@@ -389,6 +502,15 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable changes for today grouped by room
+      responses:
+        '200':
+          description: Timetable changes for today grouped by room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '500':
+          description: Internal Server Error
   /plans/daily/today/rooms:
     get:
       tags:
@@ -403,7 +525,7 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
-  /plans/daily/today/rooms/{roomID}:
+  /plans/daily/today/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
     get:
@@ -417,6 +539,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid room ID format
         '404':
           description: Room not found
         '500':
@@ -439,7 +563,6 @@ paths:
           description: Invalid date format
         '500':
           description: Internal Server Error
-
   /plans/weekly/{date}/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -513,7 +636,6 @@ paths:
           description: Invalid date format
         '500':
           description: Internal Server Error
-
   /plans/weekly/{date}/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -587,8 +709,7 @@ paths:
           description: Invalid date format
         '500':
           description: Internal Server Error
-
-  /plans/weekly/{date}/rooms/{roomID}:
+  /plans/weekly/{date}/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
       - $ref: '#/components/parameters/RoomIdPath'
@@ -623,7 +744,7 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '500':
           description: Internal Server Error
-  /plans/weekly/today/rooms/{roomID}:
+  /plans/weekly/today/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
     get:
@@ -648,13 +769,37 @@ paths:
       tags:
         - room-availability
       summary: Returns availability of all rooms for today
-  /availability/today/rooms/{roomID}:
+      responses:
+        '200':
+          description: Room availability for today
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomAvailability'
+        '500':
+          description: Internal Server Error
+  /availability/today/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
     get:
       tags:
         - room-availability
       summary: Returns availability of a specific room for today
+      responses:
+        '200':
+          description: Room availability for the specified room today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomAvailability'
+        '400':
+          description: Invalid room ID format
+        '404':
+          description: Room not found
+        '500':
+          description: Internal Server Error
   /availability/{date}/rooms:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -662,14 +807,40 @@ paths:
       tags:
         - room-availability
       summary: Returns availability of all rooms for a specific date
-  /availability/{date}/rooms/{roomID}:
+      responses:
+        '200':
+          description: Room availability for the specified date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomAvailability'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
+  /availability/{date}/rooms/{id}:
     parameters:
-      - $ref: '#/components/parameters/RoomIdPath'
       - $ref: '#/components/parameters/DatePath'
+      - $ref: '#/components/parameters/RoomIdPath'
     get:
       tags:
         - room-availability
       summary: Returns availability of a specific room for a specific date
+      responses:
+        '200':
+          description: Room availability for the specified room and date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomAvailability'
+        '400':
+          description: Invalid date or room ID format
+        '404':
+          description: Room not found
+        '500':
+          description: Internal Server Error
 components:
   parameters:
     DatePath:
@@ -680,6 +851,7 @@ components:
       schema:
         type: string
         format: date
+      example: '2025-01-15'
     WeekDatePath:
       name: date
       description: Date that is inside requested week timetable
@@ -688,6 +860,7 @@ components:
       schema:
         type: string
         format: date
+      example: '2025-01-15'
     ClassIdPath:
       name: id
       description: ID of a specific class
@@ -695,6 +868,7 @@ components:
       required: true
       schema:
         type: integer
+      example: 12
     TeacherIdPath:
       name: id
       description: ID of a specific teacher
@@ -702,13 +876,15 @@ components:
       required: true
       schema:
         type: integer
+      example: 101
     RoomIdPath:
-      name: roomID
+      name: id
       description: ID of a specific room
       in: path
       required: true
       schema:
         type: integer
+      example: 50
     TimestampPath:
       name: timestamp
       description: Timestamp to check for active lesson period without timezone info
@@ -749,10 +925,28 @@ components:
           description: Room number or name
           examples:
             - '3.12'
-        building:
+        level:
           type: string
+          description: Floor level of the room
           examples:
-            - Main Building
+            - '3. OG'
+            - 'Basement'
+            - '4'
+        building:
+          type: object
+          properties:
+            id:
+              type: integer
+              examples:
+                - 2
+            name:
+              type: string
+              examples:
+                - Main Building
+            address:
+              type: string
+              examples:
+                - 'Schulstraße 1, 12345 Musterstadt'
     SchoolClass:
       type: object
       required:
@@ -793,6 +987,10 @@ components:
         - startTime
         - endTime
       properties:
+        id:
+          type: integer
+          examples:
+            - 3
         number:
           type: integer
           description: The lesson number
@@ -810,19 +1008,32 @@ components:
             - '08:45'
     Holiday:
       type: object
+      required:
+        - name
+        - startDate
+        - endDate
       properties:
         id:
           type: integer
+          examples:
+            - 1
         name:
           type: string
+          description: Name of the holiday
           examples:
             - Christmas Break
         startDate:
           type: string
           format: date
+          description: Start date of the holiday
+          examples:
+            - '2025-12-23'
         endDate:
           type: string
           format: date
+          description: End date of the holiday
+          examples:
+            - '2026-01-06'
     TimetableEntry:
       type: object
       required:
@@ -844,10 +1055,8 @@ components:
           $ref: '#/components/schemas/Teacher'
         room:
           $ref: '#/components/schemas/Room'
-        classes:
-          type: array
-          items:
-            $ref: '#/components/schemas/SchoolClass'
+        class:
+          $ref: '#/components/schemas/SchoolClass'
         status:
           type: string
           description: Current state of the lesson
@@ -855,8 +1064,11 @@ components:
             - scheduled
             - substituted
             - cancelled
-            - time_change
+            - cancelled_held_early
+            - teacher_change
+            - subject_change
             - room_change
+            - time_change
         substitutionInfo:
           type: object
           description: Details if the lesson is not 'scheduled'
@@ -875,50 +1087,82 @@ components:
                 - Work on textbook page 45
     RoomAvailability:
       type: object
+      required:
+        - room
+        - date
+        - periods
       properties:
         room:
           $ref: '#/components/schemas/Room'
         date:
           type: string
           format: date
+          description: The date for which availability is shown
         periods:
           type: array
+          description: List of periods with availability status
           items:
             type: object
+            required:
+              - period
+              - isAvailable
             properties:
-              periodId:
-                type: integer
-              startTime:
-                type: string
-                pattern: ^([01]\d|2[0-3]):?([0-5]\d)$
-              endTime:
-                type: string
-                pattern: ^([01]\d|2[0-3]):?([0-5]\d)$
+              period:
+                $ref: '#/components/schemas/Period'
               isAvailable:
                 type: boolean
+                description: Whether the room is available during this period
     PlanResponse:
       type: object
+      required:
+        - generatedAt
+        - entries
       properties:
         generatedAt:
           type: string
           format: date-time
+          description: Timestamp when the response was generated
         entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/TimetableEntry'
-    WeeklyPlanResponse:
-      type: object
-      properties:
-        generatedAt:
-          type: string
-          format: date-time
-          description: The timestamp when the response was generated.
-        entries:
+          description: Timetable entries grouped by entity ID (class, teacher, or room)
           type: object
           additionalProperties:
+            description: List of timetable entries for the specific entity (class, teacher, or room)
+            type: array
+            items:
+              $ref: '#/components/schemas/TimetableEntry'
+    WeeklyPlanResponse:
+      type: object
+      required:
+        - generatedAt
+        - entries
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the response was generated
+        entries:
+          description: Timetable entries grouped by day
+          type: object
+          additionalProperties:
+            description: List of timetable grouped by specific entity (class, teacher, or room)
             type: object
-            description: Timetable entries grouped by date.
             additionalProperties:
+              description: List of timetable entries for the specific day and entity (class, teacher, or room)
               type: array
               items:
                 $ref: '#/components/schemas/TimetableEntry'
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          examples:
+            - Invalid date format. Expected YYYY-MM-DD.
+        code:
+          type: string
+          description: Machine-readable error code
+          examples:
+            - INVALID_DATE_FORMAT

@@ -14,6 +14,15 @@ const pool = mariadb.createPool({
     compress: true
 });
 
+// Given a date get the start and end dates of that week (Monday to Sunday), which includes that date
+function getWeekDates(date: Date): string[] {
+    const weekStartDate = new Date(date.getTime());
+    weekStartDate.setDate(weekStartDate.getDate() - (weekStartDate.getDay() || 7) + 1); // Set to Monday (treat Sunday as day 7)
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 6); // Set to Sunday
+    return [weekStartDate.toLocaleDateString("lt-LT"), weekEndDate.toLocaleDateString("lt-LT")];
+}
+
 export async function queryClasses(): Promise<{id: BigInt, name: string}[]> {
     const conn = await pool.getConnection();
     try {
@@ -321,6 +330,246 @@ export async function queryDailyRoomPlan(date: string = (new Date()).toLocaleDat
             grouped_by_room[row.room].push({date: row.date.toLocaleDateString("lt-LT"), status: row.status, period: row.period, class: row.class, subject: row.subject, teacher: row.teacher, room: row.room, building: row.building, level: row.level, address: row.address, original_teacher_id: row.original_teacher_id, original_room_id: row.original_room_id, change_reason: row.change_reason, notes: row.notes});
         }
         return grouped_by_room;
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryWeeklyClassPlan(date: string = (new Date()).toLocaleDateString("lt-LT"), classId: number | undefined = undefined) {
+    const conn = await pool.getConnection();
+    try {
+        var [startDate, endDate] = getWeekDates(new Date(date));
+        if (classId === undefined) {
+            var rows = await conn.query(`SELECT 
+                tt.date,
+                tt.status,
+                periods.number as period,
+                classes.name as class,
+                subjects.short_name as subject,
+                teachers.short_name as teacher,
+                rooms.name as room,
+                buildings.name as building,
+                rooms.level,
+                buildings.address,
+                subs.original_teacher_id,
+                subs.original_room_id,
+                subs.change_reason,
+                subs.notes
+            FROM timetable_instances tt
+                LEFT JOIN substitution_details subs ON subs.instance_id = tt.id AND subs.instance_date = tt.date
+                INNER JOIN periods ON periods.id = tt.period_number
+                INNER JOIN lesson_definitions ld ON ld.id = tt.definition_id
+                INNER JOIN lesson_classes lc ON lc.definition_id = ld.id
+                INNER JOIN classes ON classes.id = lc.class_id
+                INNER JOIN subjects ON subjects.id = ld.subject_id
+                INNER JOIN teachers ON teachers.id = ld.teacher_id
+                INNER JOIN rooms ON rooms.id = ld.room_id
+                INNER JOIN buildings ON buildings.id = rooms.building_id
+            WHERE tt.date >= ? AND tt.date <= ?
+            ORDER BY classes.name ASC, periods.number ASC, subjects.short_name ASC
+            ;`, [startDate, endDate]);
+        } else {
+            var rows = await conn.query(`SELECT 
+                tt.date,
+                tt.status,
+                periods.number as period,
+                classes.name as class,
+                subjects.short_name as subject,
+                teachers.short_name as teacher,
+                rooms.name as room,
+                buildings.name as building,
+                rooms.level,
+                buildings.address,
+                subs.original_teacher_id,
+                subs.original_room_id,
+                subs.change_reason,
+                subs.notes
+            FROM timetable_instances tt
+                LEFT JOIN substitution_details subs ON subs.instance_id = tt.id AND subs.instance_date = tt.date
+                INNER JOIN periods ON periods.id = tt.period_number
+                INNER JOIN lesson_definitions ld ON ld.id = tt.definition_id
+                INNER JOIN lesson_classes lc ON lc.definition_id = ld.id
+                INNER JOIN classes ON classes.id = lc.class_id
+                INNER JOIN subjects ON subjects.id = ld.subject_id
+                INNER JOIN teachers ON teachers.id = ld.teacher_id
+                INNER JOIN rooms ON rooms.id = ld.room_id
+                INNER JOIN buildings ON buildings.id = rooms.building_id
+            WHERE tt.date >= ? AND tt.date <= ? AND classes.id = ?
+            ORDER BY classes.name ASC, periods.number ASC, subjects.short_name ASC
+            ;`, [startDate, endDate, classId]);
+        }
+        var parsed_rows = Array.isArray(rows) ? (rows as {date: Date, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]) : [];
+        var grouped_by_date: { [key: string]: { [key: string]:  {date: string, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]}} = {};
+        for (const row of parsed_rows) {
+            if (!Object.keys(grouped_by_date).includes(row.date.toLocaleDateString("lt-LT"))) {
+                grouped_by_date[row.date.toLocaleDateString("lt-LT")] = {};
+            }
+            if (!Object.keys(grouped_by_date[row.date.toLocaleDateString("lt-LT")]).includes(row.class)) {
+                grouped_by_date[row.date.toLocaleDateString("lt-LT")][row.class] = [];
+            }
+            grouped_by_date[row.date.toLocaleDateString("lt-LT")][row.class].push({date: row.date.toLocaleDateString("lt-LT"), status: row.status, period: row.period, class: row.class, subject: row.subject, teacher: row.teacher, room: row.room, building: row.building, level: row.level, address: row.address, original_teacher_id: row.original_teacher_id, original_room_id: row.original_room_id, change_reason: row.change_reason, notes: row.notes});
+        }
+        return grouped_by_date;
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryWeeklyTeacherPlan(date: string = (new Date()).toLocaleDateString("lt-LT"), teacherId: number | undefined = undefined) {
+    const conn = await pool.getConnection();
+    try {
+        var [startDate, endDate] = getWeekDates(new Date(date));
+        if (teacherId === undefined) {
+            var rows = await conn.query(`SELECT 
+                tt.date,
+                tt.status,
+                periods.number as period,
+                classes.name as class,
+                subjects.short_name as subject,
+                teachers.short_name as teacher,
+                rooms.name as room,
+                buildings.name as building,
+                rooms.level,
+                buildings.address,
+                subs.original_teacher_id,
+                subs.original_room_id,
+                subs.change_reason,
+                subs.notes
+            FROM timetable_instances tt
+                LEFT JOIN substitution_details subs ON subs.instance_id = tt.id AND subs.instance_date = tt.date
+                INNER JOIN periods ON periods.id = tt.period_number
+                INNER JOIN lesson_definitions ld ON ld.id = tt.definition_id
+                INNER JOIN lesson_classes lc ON lc.definition_id = ld.id
+                INNER JOIN classes ON classes.id = lc.class_id
+                INNER JOIN subjects ON subjects.id = ld.subject_id
+                INNER JOIN teachers ON teachers.id = ld.teacher_id
+                INNER JOIN rooms ON rooms.id = ld.room_id
+                INNER JOIN buildings ON buildings.id = rooms.building_id
+            WHERE tt.date >= ? AND tt.date <= ?
+            ORDER BY teachers.short_name ASC, periods.number ASC, classes.name ASC
+            ;`, [startDate, endDate]);
+        } else {
+            var rows = await conn.query(`SELECT 
+                tt.date,
+                tt.status,
+                periods.number as period,
+                classes.name as class,
+                subjects.short_name as subject,
+                teachers.short_name as teacher,
+                rooms.name as room,
+                buildings.name as building,
+                rooms.level,
+                buildings.address,
+                subs.original_teacher_id,
+                subs.original_room_id,
+                subs.change_reason,
+                subs.notes
+            FROM timetable_instances tt
+                LEFT JOIN substitution_details subs ON subs.instance_id = tt.id AND subs.instance_date = tt.date
+                INNER JOIN periods ON periods.id = tt.period_number
+                INNER JOIN lesson_definitions ld ON ld.id = tt.definition_id
+                INNER JOIN lesson_classes lc ON lc.definition_id = ld.id
+                INNER JOIN classes ON classes.id = lc.class_id
+                INNER JOIN subjects ON subjects.id = ld.subject_id
+                INNER JOIN teachers ON teachers.id = ld.teacher_id
+                INNER JOIN rooms ON rooms.id = ld.room_id
+                INNER JOIN buildings ON buildings.id = rooms.building_id
+            WHERE tt.date >= ? AND tt.date <= ? AND teachers.id = ?
+            ORDER BY teachers.short_name ASC, periods.number ASC, classes.name ASC
+            ;`, [startDate, endDate, teacherId]);
+        }
+        var parsed_rows = Array.isArray(rows) ? (rows as {date: Date, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]) : [];
+        var grouped_by_date: { [key: string]: { [key: string]:  {date: string, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]}} = {};
+        for (const row of parsed_rows) {
+            if (!Object.keys(grouped_by_date).includes(row.date.toLocaleDateString("lt-LT"))) {
+                grouped_by_date[row.date.toLocaleDateString("lt-LT")] = {};
+            }
+            if (!Object.keys(grouped_by_date[row.date.toLocaleDateString("lt-LT")]).includes(row.teacher)) {
+                grouped_by_date[row.date.toLocaleDateString("lt-LT")][row.teacher] = [];
+            }
+            grouped_by_date[row.date.toLocaleDateString("lt-LT")][row.teacher].push({date: row.date.toLocaleDateString("lt-LT"), status: row.status, period: row.period, class: row.class, subject: row.subject, teacher: row.teacher, room: row.room, building: row.building, level: row.level, address: row.address, original_teacher_id: row.original_teacher_id, original_room_id: row.original_room_id, change_reason: row.change_reason, notes: row.notes});
+        }
+        return grouped_by_date;
+    } finally {
+        conn.release();
+    }
+}
+
+export async function queryWeeklyRoomPlan(date: string = (new Date()).toLocaleDateString("lt-LT"), roomId: number | undefined = undefined) {
+    const conn = await pool.getConnection();
+    try {
+        var [startDate, endDate] = getWeekDates(new Date(date));
+        if (roomId === undefined) {
+            var rows = await conn.query(`SELECT 
+                tt.date,
+                tt.status,
+                periods.number as period,
+                classes.name as class,
+                subjects.short_name as subject,
+                teachers.short_name as teacher,
+                rooms.name as room,
+                buildings.name as building,
+                rooms.level,
+                buildings.address,
+                subs.original_teacher_id,
+                subs.original_room_id,
+                subs.change_reason,
+                subs.notes
+            FROM timetable_instances tt
+                LEFT JOIN substitution_details subs ON subs.instance_id = tt.id AND subs.instance_date = tt.date
+                INNER JOIN periods ON periods.id = tt.period_number
+                INNER JOIN lesson_definitions ld ON ld.id = tt.definition_id
+                INNER JOIN lesson_classes lc ON lc.definition_id = ld.id
+                INNER JOIN classes ON classes.id = lc.class_id
+                INNER JOIN subjects ON subjects.id = ld.subject_id
+                INNER JOIN teachers ON teachers.id = ld.teacher_id
+                INNER JOIN rooms ON rooms.id = ld.room_id
+                INNER JOIN buildings ON buildings.id = rooms.building_id
+            WHERE tt.date >= ? AND tt.date <= ?
+            ORDER BY rooms.name ASC, periods.number ASC, classes.name ASC
+            ;`, [startDate, endDate]);
+        } else {
+            var rows = await conn.query(`SELECT 
+                tt.date,
+                tt.status,
+                periods.number as period,
+                classes.name as class,
+                subjects.short_name as subject,
+                teachers.short_name as teacher,
+                rooms.name as room,
+                buildings.name as building,
+                rooms.level,
+                buildings.address,
+                subs.original_teacher_id,
+                subs.original_room_id,
+                subs.change_reason,
+                subs.notes
+            FROM timetable_instances tt
+                LEFT JOIN substitution_details subs ON subs.instance_id = tt.id AND subs.instance_date = tt.date
+                INNER JOIN periods ON periods.id = tt.period_number
+                INNER JOIN lesson_definitions ld ON ld.id = tt.definition_id
+                INNER JOIN lesson_classes lc ON lc.definition_id = ld.id
+                INNER JOIN classes ON classes.id = lc.class_id
+                INNER JOIN subjects ON subjects.id = ld.subject_id
+                INNER JOIN teachers ON teachers.id = ld.teacher_id
+                INNER JOIN rooms ON rooms.id = ld.room_id
+                INNER JOIN buildings ON buildings.id = rooms.building_id
+            WHERE tt.date >= ? AND tt.date <= ? AND rooms.id = ?
+            ORDER BY rooms.name ASC, periods.number ASC, classes.name ASC
+            ;`, [startDate, endDate, roomId]);
+        }
+        var parsed_rows = Array.isArray(rows) ? (rows as {date: Date, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]) : [];
+        var grouped_by_date: { [key: string]: { [key: string]:  {date: string, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]}} = {};
+        for (const row of parsed_rows) {
+            if (!Object.keys(grouped_by_date).includes(row.date.toLocaleDateString("lt-LT"))) {
+                grouped_by_date[row.date.toLocaleDateString("lt-LT")] = {};
+            }
+            if (!Object.keys(grouped_by_date[row.date.toLocaleDateString("lt-LT")]).includes(row.room)) {
+                grouped_by_date[row.date.toLocaleDateString("lt-LT")][row.room] = [];
+            }
+            grouped_by_date[row.date.toLocaleDateString("lt-LT")][row.room].push({date: row.date.toLocaleDateString("lt-LT"), status: row.status, period: row.period, class: row.class, subject: row.subject, teacher: row.teacher, room: row.room, building: row.building, level: row.level, address: row.address, original_teacher_id: row.original_teacher_id, original_room_id: row.original_room_id, change_reason: row.change_reason, notes: row.notes});
+        }
+        return grouped_by_date;
     } finally {
         conn.release();
     }

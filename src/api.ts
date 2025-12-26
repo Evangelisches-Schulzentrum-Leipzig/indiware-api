@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import { queryClasses, querySubjects, queryRooms, queryTeachers, queryAvailableDates, queryLatestDate, queryHolidays, queryPeriods, queryDailyClassPlan, queryDailyTeacherPlan, queryDailyRoomPlan, updateQueryResults } from './db.js';
+import { queryClasses, querySubjects, queryRooms, queryTeachers, queryAvailableDates, queryLatestDate, queryHolidays, queryPeriods, queryDailyClassPlan, queryDailyTeacherPlan, queryDailyRoomPlan, queryWeeklyClassPlan, queryWeeklyTeacherPlan, queryWeeklyRoomPlan, updateQueryResults } from './db.js';
 import { query, parsedData } from './query/query.js';
 
 config();
@@ -247,6 +247,116 @@ app.get("/plans/daily/:date/rooms", async (req, res) => {
 app.get("/plans/daily/:date/rooms/:id", async (req, res) => {
     try {
         const plan = await queryDailyRoomPlan(req.params.date, parseInt(req.params.id));
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/today/classes/:id", async (req, res) => {
+    try {
+        const plan = await queryWeeklyClassPlan((new Date()).toLocaleDateString("lt-LT"), parseInt(req.params.id));
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/:date/classes", async (req, res) => {
+    try {
+        const plan = await queryWeeklyClassPlan(req.params.date);
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/:date/classes/:id", async (req, res) => {
+    try {
+        const plan = await queryWeeklyClassPlan(req.params.date, parseInt(req.params.id));
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/today/teachers", async (req, res) => {
+    try {
+        const plan = await queryWeeklyTeacherPlan();
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/today/teachers/:id", async (req, res) => {
+    try {
+        const plan = await queryWeeklyTeacherPlan((new Date()).toLocaleDateString("lt-LT"), parseInt(req.params.id));
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/:date/teachers", async (req, res) => {
+    try {
+        const plan = await queryWeeklyTeacherPlan(req.params.date);
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/:date/teachers/:id", async (req, res) => {
+    try {
+        const plan = await queryWeeklyTeacherPlan(req.params.date, parseInt(req.params.id));
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/today/rooms", async (req, res) => {
+    try {
+        const plan = await queryWeeklyRoomPlan();
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/today/rooms/:id", async (req, res) => {
+    try {
+        const plan = await queryWeeklyRoomPlan((new Date()).toLocaleDateString("lt-LT"), parseInt(req.params.id));
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/:date/rooms", async (req, res) => {
+    try {
+        const plan = await queryWeeklyRoomPlan(req.params.date);
+        res.json(plan)
+    } catch (error) {
+        console.error((error as Error).message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/plans/weekly/:date/rooms/:id", async (req, res) => {
+    try {
+        const plan = await queryWeeklyRoomPlan(req.params.date, parseInt(req.params.id));
         res.json(plan)
     } catch (error) {
         console.error((error as Error).message);

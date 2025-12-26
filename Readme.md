@@ -1,3 +1,6 @@
+# New Version in development
+Switch to branch `v2` for current state.
+
 ## Indiware crawler
 
 This crawler gets contents from stundenplan24.de for the vertretungsplan.io application.

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS buildings (
 CREATE TABLE IF NOT EXISTS rooms (
     id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(20) NOT NULL,
-    building_id SMALLINT UNSIGNED NULL,
+    building_id SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     level VARCHAR(16) NULL, 
     CONSTRAINT fk_room_building FOREIGN KEY (building_id) 
         REFERENCES buildings(id) ON DELETE CASCADE,
@@ -42,9 +42,11 @@ CREATE TABLE IF NOT EXISTS classes (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS periods (
-    number TINYINT UNSIGNED PRIMARY KEY,
+    id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    number TINYINT UNSIGNED NOT NULL,
     start_time TIME NOT NULL,
-    end_time TIME NOT NULL
+    end_time TIME NOT NULL,
+    UNIQUE KEY uq_period_number (number, start_time, end_time)
 ) ENGINE=InnoDB;
 
 -- ==========================================
@@ -53,9 +55,9 @@ CREATE TABLE IF NOT EXISTS periods (
 
 CREATE TABLE IF NOT EXISTS lesson_definitions (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    subject_id SMALLINT UNSIGNED NULL,
-    teacher_id SMALLINT UNSIGNED NULL,
-    room_id SMALLINT UNSIGNED NULL,
+    subject_id SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    teacher_id SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    room_id SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     CONSTRAINT fk_def_sub FOREIGN KEY (subject_id) REFERENCES subjects(id),
     CONSTRAINT fk_def_tea FOREIGN KEY (teacher_id) REFERENCES teachers(id),
     CONSTRAINT fk_def_roo FOREIGN KEY (room_id) REFERENCES rooms(id),
@@ -85,8 +87,9 @@ CREATE TABLE IF NOT EXISTS timetable_instances (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP INVISIBLE,
     day_of_week TINYINT AS (DAYOFWEEK(date)) VIRTUAL,
 
-    UNIQUE KEY (date, id, period_number), 
+    UNIQUE KEY uq_date_period_def (date, period_number, definition_id), 
     INDEX idx_lookup_date_class (date, period_number), -- Faster daily plan lookups
+    INDEX idx_date_id (date, id), -- Added index for foreign key reference
     CONSTRAINT fk_ti_per FOREIGN KEY (period_number) REFERENCES periods(number),    
     CONSTRAINT fk_ti_def FOREIGN KEY (definition_id) REFERENCES lesson_definitions(id)
 ) 
@@ -148,8 +151,25 @@ CREATE TABLE IF NOT EXISTS plan_metadata (
 
 CREATE TABLE IF NOT EXISTS holidays (
     id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    INDEX idx_holiday_range (start_date, end_date)
+    UNIQUE KEY idx_holiday_range (start_date, end_date)
 ) ENGINE=InnoDB;
+
+-- ==========================================
+-- 5. Placeholder values for no teacher/subject/room
+-- ==========================================
+INSERT INTO teachers (id, short_name) VALUES (1, 'N/A')
+    ON DUPLICATE KEY UPDATE short_name = 'N/A';
+INSERT INTO subjects (id, short_name, long_name) VALUES (1, 'N/A', 'Not Assigned')
+    ON DUPLICATE KEY UPDATE short_name = 'N/A', long_name = 'Not Assigned';
+INSERT INTO buildings (id, name) VALUES (1, 'N/A')
+    ON DUPLICATE KEY UPDATE name = 'N/A';
+INSERT INTO rooms (id, name, building_id) VALUES (1, 'N/A', 1)
+    ON DUPLICATE KEY UPDATE name = 'N/A', building_id = 1;
+-- Set Auto_Increment to start from 2
+ALTER TABLE teachers AUTO_INCREMENT = 2;
+ALTER TABLE subjects AUTO_INCREMENT = 2;
+ALTER TABLE rooms AUTO_INCREMENT = 2;
+ALTER TABLE buildings AUTO_INCREMENT = 2;

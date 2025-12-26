@@ -136,11 +136,15 @@ app.get('/metadata/current-period/:timestamp', async (req, res) => {
 
 app.get("/query", async (req, res) => {
     try {
-        const data = await query();
+        var currentDate = new Date();
+        const date = req.query.date as string | undefined || currentDate.toISOString().split('T')[0];
+        const teacher = (req.query.teacher as string) == 'true' ? true : false;
+        const data = await query(date, teacher);
         await updateQueryResults(data);
         res.json(data);
     } catch (error) {
         console.error((error as Error).message);
+        console.log((error as Error).stack);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

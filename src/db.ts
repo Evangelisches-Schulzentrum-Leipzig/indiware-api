@@ -2,13 +2,14 @@ import mariadb from 'mariadb';
 import { config } from 'dotenv';
 
 interface parsedData {
+    planType: string,
     planDate: string,
     timeStamp: string,
     classes: string[],
     subjects: string[],
     rooms: string[],
     teachers: string[],
-    periods: {start: string, end: string}[],
+    periods: {number: number, start: string, end: string}[],
     holidayRanges: {start: string, end: string}[],
     plans: {
         id: number,
@@ -126,6 +127,16 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
     try {
         await conn.beginTransaction();
 
+        // Insert plan metadata 
+        if (data.planDate && data.timeStamp && data.planType) {
+            await conn.query(
+                `INSERT INTO plan_metadata (reference_date, generated_at, plan_type) 
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE generated_at = VALUES(generated_at), plan_type = VALUES(plan_type);`,
+                [data.planDate, new Date(data.timeStamp).toLocaleString('lt-LT'), data.planType]
+            );
+        }
+
         // Batch insert classes
         if (data.classes.length > 0) {
             const classValues = data.classes.map(name => [name]);
@@ -146,6 +157,8 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
             for (const row of subjectRows as {id: number, short_name: string}[]) {
                 subjectsMap[row.short_name] = row.id;
             }
+        } else {
+            var subjectsMap: {[key: string]: number} = {};
         }
 
         // Batch insert rooms
@@ -157,6 +170,8 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
             for (const row of roomRows as {id: number, name: string}[]) {
                 roomsMap[row.name] = row.id;
             }
+        } else {
+            var roomsMap: {[key: string]: number} = {};
         }
 
         // Batch insert teachers
@@ -168,26 +183,34 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
             for (const row of teacherRows as {id: number, short_name: string}[]) {
                 teachersMap[row.short_name] = row.id;
             }
+        } else {
+            var teachersMap: {[key: string]: number} = {};
         }
 
         // Batch insert periods
         if (data.periods.length > 0) {
-            const periodValues = data.periods.map((period, index) => [index, period.start, period.end]).filter(([_, start, end]) => start && end);
+            const periodValues = data.periods.map((period) => [period.number, period.start, period.end]).filter(([_, start, end]) => start && end);
             await conn.batch("INSERT INTO periods (number, start_time, end_time) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE start_time = VALUES(start_time), end_time = VALUES(end_time);", periodValues);
         }
 
         // Batch insert holidays
         if (data.holidayRanges.length > 0) {
-            const holidayValues = data.holidayRanges.map(holiday => [holiday.start, holiday.end, holiday.start]);
-            await conn.batch("INSERT INTO holidays (start_date, end_date, name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), end_date = VALUES(end_date);", holidayValues);
+            const holidayValues = data.holidayRanges.map(holiday => [holiday.start, holiday.end]);
+            await conn.batch("INSERT INTO holidays (start_date, end_date) VALUES (?, ?) ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), end_date = VALUES(end_date);", holidayValues);
         }
 
         // Batch insert lesson definitions
-        const lessonDefinitions = data.plans.map(plan => [
-            subjectsMap[plan.subject] ?? null,
-            teachersMap[plan.teacher] ?? null,
-            roomsMap[plan.room] ?? null
-        ]);
+        const lessonDefinitionMap = new Map<string, [number | null, number | null, number | null]>();
+        for (const plan of data.plans) {
+            const subjectId = subjectsMap[plan.subject] ?? 1;
+            const teacherId = teachersMap[plan.teacher] ?? 1;
+            const roomId = roomsMap[plan.room] ?? 1;
+            const key = `${subjectId}|${teacherId}|${roomId}`;
+            if (!lessonDefinitionMap.has(key)) {
+                lessonDefinitionMap.set(key, [subjectId, teacherId, roomId]);
+            }
+        }
+        const lessonDefinitions = Array.from(lessonDefinitionMap.values());
         await conn.batch(
             `INSERT INTO lesson_definitions (subject_id, teacher_id, room_id) 
              VALUES (?, ?, ?) 
@@ -198,11 +221,7 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
         // Map lesson definitions to their IDs
         const lessonDefinitionRows = await conn.query(
             `SELECT id, subject_id, teacher_id, room_id 
-             FROM lesson_definitions 
-             WHERE (subject_id, teacher_id, room_id) IN (${lessonDefinitions
-                 .map(() => '(?, ?, ?)')
-                 .join(', ')})`,
-            lessonDefinitions.flat()
+             FROM lesson_definitions;`
         );
         const lessonDefinitionsMap: { [key: string]: number } = {};
         for (const row of lessonDefinitionRows as { id: number, subject_id: number, teacher_id: number, room_id: number }[]) {
@@ -210,10 +229,29 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
             lessonDefinitionsMap[key] = row.id;
         }
 
+        // Match lessons with classes
+        // Batch insert lesson_classes
+        const lessonClassValues = data.plans.map(plan => {
+            const classId = classesMap[plan.className] ?? null;
+            const subjectId = subjectsMap[plan.subject] ?? 1;
+            const teacherId = teachersMap[plan.teacher] ?? 1;
+            const roomId = roomsMap[plan.room] ?? 1;
+            return [lessonDefinitionsMap[`${subjectId}-${teacherId}-${roomId}`] ?? null, classId];
+        }).filter(([definitionId, classId]) => definitionId !== null && classId !== null);
+
+        if (lessonClassValues.length > 0) {
+            await conn.batch(
+                `INSERT INTO lesson_classes (definition_id, class_id) 
+                 VALUES (?, ?) 
+                 ON DUPLICATE KEY UPDATE definition_id = VALUES(definition_id), class_id = VALUES(class_id);`,
+                lessonClassValues
+            );
+        }
+
         // Batch insert timetable instances
         if (data.plans.length > 0) {
             const timetableValues = data.plans.map(plan => {
-                const definitionKey = `${subjectsMap[plan.subject] ?? null}-${teachersMap[plan.teacher] ?? null}-${roomsMap[plan.room] ?? null}`;
+                const definitionKey = `${subjectsMap[plan.subject] ?? 1}-${teachersMap[plan.teacher] ?? 1}-${roomsMap[plan.room] ?? 1}`;
                 return [
                     plan.day,
                     plan.period,
@@ -229,24 +267,46 @@ export async function updateQueryResults(data: parsedData): Promise<void> {
             );
         }
 
+        // Map timetable instances to their IDs
+        const timetableInstanceRows = await conn.query(
+            `SELECT id, date, period_number, definition_id 
+             FROM timetable_instances 
+             WHERE date IN (?) AND period_number IN (?);`,
+            [data.plans.map(plan => plan.day), data.plans.map(plan => plan.period)]
+        );
+
+        const timetableInstancesMap: { [key: string]: number } = {};
+        for (const row of timetableInstanceRows as { id: number, date: Date, period_number: number, definition_id: number }[]) {
+            const key = `${row.date.toLocaleDateString('en-CA')}-${row.period_number}-${row.definition_id}`;
+            timetableInstancesMap[key] = row.id;
+        }
+
         // Batch insert substitution details
         const substitutionValues = data.plans
             .filter(plan => plan.teacherChanged || plan.roomChanged)
             .map(plan => {
-                const definitionKey = `${subjectsMap[plan.subject] ?? null}-${teachersMap[plan.teacher] ?? null}-${roomsMap[plan.room] ?? null}`;
-                return [
-                    plan.day,
-                    lessonDefinitionsMap[definitionKey] ?? null,
-                    plan.teacherChanged ? teachersMap[plan.teacher] : null,
-                    plan.roomChanged ? roomsMap[plan.room] : null,
-                    plan.changeDetails
-                ];
-            });
+                const definitionKey = `${subjectsMap[plan.subject] ?? 1}-${teachersMap[plan.teacher] ?? 1}-${roomsMap[plan.room] ?? 1}`;
+                const instanceKey = `${plan.day}-${plan.period}-${lessonDefinitionsMap[definitionKey] ?? null}`;
+                const instanceId = timetableInstancesMap[instanceKey] ?? null;
+
+                if (instanceId !== null) {
+                    return [
+                        plan.day,
+                        instanceId,
+                        plan.teacherChanged ? teachersMap[plan.teacher] : null,
+                        plan.roomChanged ? roomsMap[plan.room] : null,
+                        plan.changeDetails
+                    ];
+                }
+                return null;
+            })
+            .filter(row => row !== null);
+
         if (substitutionValues.length > 0) {
             await conn.batch(
-                `INSERT INTO substitution_details (instance_date, instance_id, original_teacher_id, original_room_id, change_reason) 
+                `INSERT INTO substitution_details (instance_date, instance_id, original_teacher_id, original_room_id, notes) 
                  VALUES (?, ?, ?, ?, ?) 
-                 ON DUPLICATE KEY UPDATE original_teacher_id = VALUES(original_teacher_id), original_room_id = VALUES(original_room_id), change_reason = VALUES(change_reason);`,
+                 ON DUPLICATE KEY UPDATE original_teacher_id = VALUES(original_teacher_id), original_room_id = VALUES(original_room_id), notes = VALUES(notes);`,
                 substitutionValues
             );
         }

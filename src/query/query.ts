@@ -2,13 +2,14 @@ import { xml2js } from 'xml-js'
 import { XmlFileSchema } from './xmlschema'
 
 interface parsedData {
+    planType: string,
     planDate: string,
     timeStamp: string,
     classes: string[],
     subjects: string[],
     rooms: string[],
     teachers: string[],
-    periods: {start: string, end: string}[],
+    periods: {number: number, start: string, end: string}[],
     holidayRanges: {start: string, end: string}[],
     plans: {
         id: number,
@@ -26,13 +27,20 @@ interface parsedData {
     }[]
 }
 
-export async function query(): Promise<parsedData> {
-    const headers = {
-        'Authorization': 'Basic ' + Buffer.from('lehrer' + ':' + process.env.EVS_TEACH_PASSWORD, 'utf8').toString('base64')
+export async function query(date: string, teacher: boolean): Promise<parsedData> {
+    if (teacher) {
+        const headers = {
+            'Authorization': 'Basic ' + Buffer.from('lehrer' + ':' + process.env.EVS_TEACH_PASSWORD, 'utf8').toString('base64')
+        }
+        var content = await fetch("https://stundenplan24.de/10040832/moble/mobdaten/PlanLe" + date + ".xml", { headers: headers});
+    } else {
+        const headers = {
+            'Authorization': 'Basic ' + Buffer.from('schueler' + ':' + process.env.EVS_STUD_PASSWORD, 'utf8').toString('base64')
+        }
+        var content = await fetch("https://stundenplan24.de/10040832/mobil/mobdaten/PlanKl" + date + ".xml", { headers: headers});
     }
-    var content = await fetch("https://stundenplan24.de/10040832/moble/mobdaten/PlanLe20251218.xml", { headers: headers});
     if (content.status !== 200) {
-        throw new Error('failed to query PlanLe20251218.xml - ' + content.status)
+        throw new Error(`failed to query PlanLe${date}.xml - ` + content.status)
     }
     var xml = await content.text();
     var data = parseXmlFile(xml);
@@ -115,16 +123,12 @@ function parseXmlFile(file: string): parsedData {
     var teachers = Array.from(teachersSet);
     teachers.sort();
 
-    var periods: {start: string, end: string}[] = [];
+    var periods: {number: number, start: string, end: string}[] = [];
     parsed.VpMobil[0].Klassen[0].Kl.forEach(cl => {
         cl.KlStunden?.[0].KlSt?.forEach(ks => {
             var periodName = parseInt(ks._text[0]) || 0;
-            if (periods[periodName] === undefined) {
-                periods[periodName] = { start: ks._attributes.ZeitVon, end: ks._attributes.ZeitBis };
-            } else {
-                if (periods[periodName].start !== ks._attributes.ZeitVon || periods[periodName].end !== ks._attributes.ZeitBis) {
-                    console.warn(`Inconsistent period times for period ${periodName}: existing (${periods[periodName].start} - ${periods[periodName].end}), new (${ks._attributes.ZeitVon} - ${ks._attributes.ZeitBis})`);
-                }
+            if (!periods.some(p => p.number === periodName && p.start === ks._attributes.ZeitVon && p.end === ks._attributes.ZeitBis)) {
+                periods.push({ number: periodName, start: ks._attributes.ZeitVon, end: ks._attributes.ZeitBis });
             }
         });
     });
@@ -200,6 +204,7 @@ function parseXmlFile(file: string): parsedData {
     plans.sort((a, b) => a.id - b.id);
 
     return {
+        planType: parsed.VpMobil[0].Kopf[0].planart[0]._text[0],
         planDate: isoDate,
         timeStamp: isoTimestamp,
         classes: expandedClasses,
@@ -226,7 +231,7 @@ function parsePlan(klassen: XmlFileSchema["VpMobil"][0]["Klassen"][0]["Kl"], tea
             var room = st.Ra?.[0]._text?.[0] || '';
             var roomChanged = st.Ra?.[0] && '_attributes' in st.Ra[0] && st.Ra[0]._attributes?.RaAe === 'RaGeaendert';
             var stdId = st.Nr ? parseInt(st.Nr[0]._text[0]) || 0 : 0;
-            var changeDetails = (subjectChanged || teacherChanged || roomChanged) ? st.If[0]._text[0] || '' : '';
+            var changeDetails = ((subjectChanged || teacherChanged || roomChanged) &&  st.If[0]._text !== undefined ) ? st.If[0]._text[0] || '' : '';
 
             output.push({
                 id: stdId,

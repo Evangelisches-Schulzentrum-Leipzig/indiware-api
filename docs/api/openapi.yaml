@@ -7,7 +7,7 @@ info:
   license:
     name: Open Source License 3.0
     url: https://opensource.org/license/osl-3-0
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: http://localhost:80
   - url: https://secure-gateway.schulzentrum.de/api/v1/timetable
@@ -37,6 +37,10 @@ paths:
                   $ref: '#/components/schemas/SchoolClass'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/subjects:
     get:
       tags:
@@ -53,6 +57,10 @@ paths:
                   $ref: '#/components/schemas/Subject'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/rooms:
     get:
       tags:
@@ -69,6 +77,10 @@ paths:
                   $ref: '#/components/schemas/Room'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/teachers:
     get:
       tags:
@@ -85,6 +97,10 @@ paths:
                   $ref: '#/components/schemas/Teacher'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/dates:
     get:
       tags:
@@ -98,20 +114,13 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    date:
-                      type: string
-                      format: date
-                    status:
-                      type: string
-                      description: Status of the date
-                      enum:
-                        - school_day
-                        - weekend
-                        - holiday
+                  $ref: '#/components/schemas/DateStatus'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/dates/next-school-day:
     get:
       tags:
@@ -130,6 +139,10 @@ paths:
                 format: date
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/available-dates:
     get:
       tags:
@@ -147,6 +160,10 @@ paths:
                   format: date
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/latest-date:
     get:
       tags:
@@ -162,6 +179,10 @@ paths:
                 format: date
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/holidays:
     get:
       tags:
@@ -178,6 +199,10 @@ paths:
                   $ref: '#/components/schemas/Holiday'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/periods:
     get:
       tags:
@@ -194,6 +219,10 @@ paths:
                   $ref: '#/components/schemas/Period'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/current-period:
     get:
       tags:
@@ -208,8 +237,16 @@ paths:
                 $ref: '#/components/schemas/Period'
         '404':
           description: No active period at current time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /metadata/current-period/{timestamp}:
     parameters:
       - $ref: '#/components/parameters/TimestampPath'
@@ -226,10 +263,22 @@ paths:
                 $ref: '#/components/schemas/Period'
         '400':
           description: Invalid timestamp format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: No active period at specified time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/classes/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -246,8 +295,16 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/classes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -264,8 +321,16 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -283,10 +348,22 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date or class ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/classes/changes:
     get:
       tags:
@@ -301,6 +378,10 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/classes:
     get:
       tags:
@@ -315,6 +396,10 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/ClassIdPath'
@@ -331,10 +416,22 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid class ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/teachers/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -351,8 +448,16 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/teachers:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -369,8 +474,16 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -388,10 +501,22 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date or teacher ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Teacher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/teachers/changes:
     get:
       tags:
@@ -406,6 +531,10 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/teachers:
     get:
       tags:
@@ -420,6 +549,10 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/TeacherIdPath'
@@ -436,10 +569,22 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid teacher ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Teacher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/rooms/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -456,8 +601,16 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/rooms:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -474,8 +627,16 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/{date}/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -493,10 +654,22 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid date or room ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/rooms/changes:
     get:
       tags:
@@ -511,6 +684,10 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/rooms:
     get:
       tags:
@@ -525,6 +702,10 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/daily/today/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
@@ -541,10 +722,22 @@ paths:
                 $ref: '#/components/schemas/PlanResponse'
         '400':
           description: Invalid room ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/{date}/classes:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -561,8 +754,16 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/{date}/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -580,10 +781,22 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid date or class ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/today/classes:
     get:
       tags:
@@ -598,6 +811,10 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/today/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/ClassIdPath'
@@ -614,10 +831,22 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid class ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/{date}/teachers:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -634,8 +863,16 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/{date}/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -653,10 +890,22 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid date or teacher ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Teacher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/today/teachers:
     get:
       tags:
@@ -671,6 +920,10 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/today/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/TeacherIdPath'
@@ -687,10 +940,22 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid teacher ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Teacher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/{date}/rooms:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -707,8 +972,16 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/{date}/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'
@@ -726,10 +999,22 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid date or room ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/today/rooms:
     get:
       tags:
@@ -744,6 +1029,10 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plans/weekly/today/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
@@ -760,10 +1049,22 @@ paths:
                 $ref: '#/components/schemas/WeeklyPlanResponse'
         '400':
           description: Invalid room ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /availability/today/rooms:
     get:
       tags:
@@ -780,6 +1081,10 @@ paths:
                   $ref: '#/components/schemas/RoomAvailability'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /availability/today/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
@@ -796,10 +1101,22 @@ paths:
                 $ref: '#/components/schemas/RoomAvailability'
         '400':
           description: Invalid room ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /availability/{date}/rooms:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -818,8 +1135,16 @@ paths:
                   $ref: '#/components/schemas/RoomAvailability'
         '400':
           description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /availability/{date}/rooms/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -837,10 +1162,22 @@ paths:
                 $ref: '#/components/schemas/RoomAvailability'
         '400':
           description: Invalid date or room ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   parameters:
     DatePath:
@@ -1151,6 +1488,27 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TimetableEntry'
+    DateStatus:
+      type: object
+      required:
+        - date
+        - status
+      properties:
+        date:
+          type: string
+          format: date
+          description: The calendar date
+          examples:
+            - '2025-01-15'
+        status:
+          type: string
+          description: Status of the date
+          enum:
+            - school_day
+            - weekend
+            - holiday
+          examples:
+            - school_day
     Error:
       type: object
       required:

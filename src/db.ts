@@ -280,7 +280,7 @@ export async function queryDailyRoomPlan(date: string = (new Date()).toLocaleDat
                 INNER JOIN rooms ON rooms.id = ld.room_id
                 INNER JOIN buildings ON buildings.id = rooms.building_id
             WHERE tt.date = ?
-            ORDER BY teachers.short_name ASC, periods.number ASC, classes.name ASC
+            ORDER BY rooms.name ASC, periods.number ASC, classes.name ASC
             ;`, date);
         } else {
             var rows = await conn.query(`SELECT 
@@ -309,7 +309,7 @@ export async function queryDailyRoomPlan(date: string = (new Date()).toLocaleDat
                 INNER JOIN rooms ON rooms.id = ld.room_id
                 INNER JOIN buildings ON buildings.id = rooms.building_id
             WHERE tt.date = ? AND rooms.id = ?
-            ORDER BY teachers.short_name ASC, periods.number ASC, classes.name ASC
+            ORDER BY rooms.name ASC, periods.number ASC, classes.name ASC
             ;`, [date, roomId]);
         }
         var parsed_rows = Array.isArray(rows) ? (rows as {date: Date, status: string, period: number, class: string, subject: string, teacher: string, room: string, building: string, level: string | null, address: string | null, original_teacher_id: string |  null, original_room_id: string | null, change_reason: string | null, notes: string | null}[]) : [];

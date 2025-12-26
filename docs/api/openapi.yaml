@@ -196,6 +196,17 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for a specific date and all classes
+      responses:
+        '200':
+          description: Timetable for all classes on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -204,6 +215,19 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for a specific date and class
+      responses:
+        '200':
+          description: Timetable for the specified class on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date or class ID format
+        '404':
+          description: Class not found
+        '500':
+          description: Internal Server Error
   /plans/daily/today/classes/changes:
     get:
       tags:
@@ -214,13 +238,33 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for today and all classes
+      responses:
+        '200':
+          description: Timetable for all classes for today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '500':
+          description: Internal Server Error
   /plans/daily/today/classes/{id}:
     parameters:
       - $ref: '#/components/parameters/ClassIdPath'
     get:
       tags:
         - plan-daily
-      summary: Returns timetable for today and class
+      summary: Returns timetable for today and a specific class
+      responses:
+        '200':
+          description: Timetable for the specified class for today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '404':
+          description: Class not found
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/teachers/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -235,6 +279,17 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for a specific date and all teachers
+      responses:
+        '200':
+          description: Timetable for all teachers on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -243,6 +298,19 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for a specific date and teacher
+      responses:
+        '200':
+          description: Timetable for the specified teacher on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date or teacher ID format
+        '404':
+          description: Teacher not found
+        '500':
+          description: Internal Server Error
   /plans/daily/today/teachers/changes:
     get:
       tags:
@@ -253,13 +321,33 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for today and all teachers
+      responses:
+        '200':
+          description: Timetable for all teachers for today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '500':
+          description: Internal Server Error
   /plans/daily/today/teachers/{id}:
     parameters:
       - $ref: '#/components/parameters/TeacherIdPath'
     get:
       tags:
         - plan-daily
-      summary: Returns timetable for today and teacher
+      summary: Returns timetable for today and a specific teacher
+      responses:
+        '200':
+          description: Timetable for the specified teacher for today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '404':
+          description: Teacher not found
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/rooms/changes:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -274,6 +362,17 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for a specific date and all rooms
+      responses:
+        '200':
+          description: Timetable for all rooms on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal Server Error
   /plans/daily/{date}/rooms/{roomID}:
     parameters:
       - $ref: '#/components/parameters/DatePath'
@@ -282,6 +381,19 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for a specific date and room
+      responses:
+        '200':
+          description: Timetable for the specified room on the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          description: Invalid date or room ID format
+        '404':
+          description: Room not found
+        '500':
+          description: Internal Server Error
   /plans/daily/today/rooms/changes:
     get:
       tags:
@@ -292,13 +404,33 @@ paths:
       tags:
         - plan-daily
       summary: Returns timetable for today and all rooms
+      responses:
+        '200':
+          description: Timetable for all rooms for today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '500':
+          description: Internal Server Error
   /plans/daily/today/rooms/{roomID}:
     parameters:
       - $ref: '#/components/parameters/RoomIdPath'
     get:
       tags:
         - plan-daily
-      summary: Returns timetable for today and room
+      summary: Returns timetable for today and a specific room
+      responses:
+        '200':
+          description: Timetable for the specified room for today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '404':
+          description: Room not found
+        '500':
+          description: Internal Server Error
   /plans/weekly/{date}/classes:
     parameters:
       - $ref: '#/components/parameters/WeekDatePath'

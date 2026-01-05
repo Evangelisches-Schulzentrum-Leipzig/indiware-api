@@ -31,17 +31,7 @@ Includes OpenAPI documentation and Swagger-Viewer.
    npm install -D
    ```
 3. Set up the database using the schema in `database/schema_v2.sql`
-4. Configure environment variables or create `.env` file with same content:
-   ```
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=root
-   DB_PASSWORD=your_password
-   DB_NAME=timetable_v2
-   API_PORT=80
-   EVS_TEACH_PASSWORD=teacher_password
-   EVS_STUD_PASSWORD=student_password
-   ```
+4. Copy the example enviroment file `.env.example`, rename to `.env` and fill with own enviroment values/passwords
 
 ## Usage
 

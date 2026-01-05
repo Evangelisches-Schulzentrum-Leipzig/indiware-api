@@ -7,7 +7,7 @@ import { query, parsedData } from './query/query.js';
 config();
 
 const app = express()
-const port = process.env.API_PORT || 80;
+const port = process.env['API_PORT'] || 80;
 
 app.use(cors())
 
@@ -379,7 +379,7 @@ app.get("/query", async (req, res) => {
             res.json(response);
         } else {
             var currentDate = new Date();
-            const date = (req.query.date as string | undefined) || currentDate.toISOString().split('T')[0];
+            const date = (req.query['date'] as string | undefined) || currentDate.toISOString().split('T')[0];
             const teacher = Object.keys(req.query).includes('teacher') ? true : false;
             const data = await query(date, teacher);
             await updateQueryResults(data);

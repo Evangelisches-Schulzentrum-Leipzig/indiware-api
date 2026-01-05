@@ -1,5 +1,5 @@
 import { xml2js } from 'xml-js'
-import { XmlFileSchema } from './xmlschema'
+import { XmlFileSchema } from './xmlschema.js'
 
 export interface parsedData {
     planType: string,
@@ -30,12 +30,12 @@ export interface parsedData {
 export async function query(date: string, teacher: boolean): Promise<parsedData> {
     if (teacher) {
         const headers = {
-            'Authorization': 'Basic ' + Buffer.from('lehrer' + ':' + process.env.EVS_TEACH_PASSWORD, 'utf8').toString('base64')
+            'Authorization': 'Basic ' + Buffer.from('lehrer' + ':' + process.env['EVS_TEACH_PASSWORD'], 'utf8').toString('base64')
         }
         var content = await fetch("https://stundenplan24.de/10040832/moble/mobdaten/PlanLe" + date + ".xml", { headers: headers});
     } else {
         const headers = {
-            'Authorization': 'Basic ' + Buffer.from('schueler' + ':' + process.env.EVS_STUD_PASSWORD, 'utf8').toString('base64')
+            'Authorization': 'Basic ' + Buffer.from('schueler' + ':' + process.env['EVS_STUD_PASSWORD'], 'utf8').toString('base64')
         }
         var content = await fetch("https://stundenplan24.de/10040832/mobil/mobdaten/PlanKl" + date + ".xml", { headers: headers});
     }

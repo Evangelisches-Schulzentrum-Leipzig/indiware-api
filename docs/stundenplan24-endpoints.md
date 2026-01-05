@@ -1,0 +1,68 @@
+# Endpoints on https://stundenplan24.de for timetable data
+## VPmobil `/[schoolnumber]/mobil/`
+- `/[schoolnumber]/mobil/mobdaten/Klassen.xml`
+  - Daily plan data for all classes
+  - Alias for current date plan
+  - Includes timings for lessons
+- `/[schoolnumber]/mobil/mobdaten/PlanKl[yyyymmdd].xml`
+  - Daily plan data for all classes
+  - Includes timings for lessons
+- `/[schoolnumber]/moble/mobdaten/Lehrer.xml`
+  - Daily plan data for all teachers
+  - Alias for current date plan
+  - Includes timings for lessons
+- `/[schoolnumber]/moble/mobdaten/PlanLe[yyyymmdd].xml`
+  - Daily plan data for all teachers
+  - Includes timings for lessons
+## Change View `/[schoolnumber]/vplan/`
+- `/[schoolnumber]/vplan/vdaten/VplanKl.xml`
+  - Change data for all classes for today
+  - Alias for current day plan
+- `/[schoolnumber]/vplan/vdaten/VplanKl[yyyymmdd].xml`
+  - Change data for all classes
+- `/[schoolnumber]/vplanle/vdaten/VplanLe.xml`
+  - Change data for all teachers for today
+  - Alias for current day plan
+- `/[schoolnumber]/vplanle/vdaten/VplanLe[yyyymmdd].xml`
+  - Change data for all teachers
+## Weekly plan `/[schoolnumber]/wplan/`
+- `/[schoolnumber]/wplan/wdatenk/SPlanKl_Basis.xml`
+  - Base data for weekly plan
+  - Includes classes, free days/holidays, schoolweeks for current schoolyear
+- `/[schoolnumber]/wplan/wdatenk/SPlanKl_Sw[WeekNumber].xml`
+  - Base weekly plan data by class without changes 
+  - Includes free days/holidays, schoolweeks for current schoolyear
+- `/[schoolnumber]/wplan/wdatenk/WPlanKl_[yyyymmdd].xml`
+  - Daily plan for all classes
+  - Similar to VPmobil plan but without timings and diffrent XML tag names
+- `/[schoolnumber]/wplan/wdatenl/SPlanLe_Basis.xml`
+  - Base data for weekly plan for teachers
+  - Includes classes, free days/holidays, schoolweeks for current schoolyear
+- `/[schoolnumber]/wplan/wdatenl/SPlanLe_Sw[WeekNumber].xml`
+  - Base weekly plan data by teacher without changes 
+  - Includes free days/holidays, schoolweeks for current schoolyear
+- `/[schoolnumber]/wplan/wdatenl/WPlanLe_[yyyymmdd].xml`
+  - Daily plan for all teachers
+  - Similar to VPmobil plan but without timings and diffrent XML tag names
+- `/[schoolnumber]/wplan/wdatenr/SPlanRa_Basis.xml`
+  - Base data for weekly plan for rooms
+  - Includes classes, free days/holidays, schoolweeks for current schoolyear
+- `/[schoolnumber]/wplan/wdatenr/SPlanRa_Sw[WeekNumber].xml`
+  - Base weekly plan data by room without changes 
+  - Includes free days/holidays, schoolweeks for current schoolyear
+- `/[schoolnumber]/wplan/wdatenr/WPlanRa_[yyyymmdd].xml`
+  - Daily plan for all rooms
+  - Similar to VPmobil plan but without timings and diffrent XML tag names
+## Base Timetable view `/[schoolnumber]/splan/`
+- `/[schoolnumber]/splan/sdaten/splank.xml`
+  - Base timetable data for all classes
+  - Includes freedays, school year weeks, week types (A/B)
+  - Per class data blocked lessons, lessons including timings, lessons (with weektype, day, lesson number, subject, teacher, classes, room) 
+- `/[schoolnumber]/splan/sdaten/splanl.xml`
+  - Base timetable data for all teachers
+  - Includes freedays, school year weeks, week types (A/B)
+  - Per teacher data blocked lessons, lessons including timings, lessons (with weektype, day, lesson number, subject, teacher, classes, room) 
+- `/[schoolnumber]/splan/sdaten/splanr.xml`
+  - Base timetable data for all rooms
+  - Includes freedays, school year weeks, week types (A/B)
+  - Per room data blocked lessons, lessons including timings, lessons (with weektype, day, lesson number, subject, teacher, classes, room) 

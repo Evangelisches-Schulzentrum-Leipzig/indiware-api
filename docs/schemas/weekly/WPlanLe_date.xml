@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<splan>
+    <Kopf>
+        <PlanArt>L</PlanArt>
+        <zeitstempel>05.01.2026, 10:32</zeitstempel>
+        <datei>SPlanLe_Sw19.xml</datei>
+        <schulname>Evangelisches Schulzentrum Leipzig</schulname>
+        <schulort>Leipzig</schulort>
+        <upname>Indiware Unterrichtsplaner</upname>
+        <upmodul>Stundenplan</upmodul>
+        <upversion>7.0.6.1</upversion>
+    </Kopf>
+    <Basisdaten>
+        <BaDatumVon>12.01.2026</BaDatumVon>
+        <BaDatumBis>06.02.2026</BaDatumBis>
+        <BaSwVon>19</BaSwVon>
+        <BaSwBis>22</BaSwBis>
+        <BaTageProWoche>5</BaTageProWoche>
+    </Basisdaten>
+    <FreieTage>
+        <ft>250808</ft>
+        <ft feier="1">251003</ft>
+        ...
+    </FreieTage>
+    <Schulwochen>
+        <Sw SwKw="33" SwDatumVon="11.08.2025" SwDatumBis="15.08.2025" SwWo="A">1</Sw>
+        <Sw SwKw="34" SwDatumVon="18.08.2025" SwDatumBis="22.08.2025" SwWo="B">2</Sw>
+        ...
+    </Schulwochen>
+    <Lehrer>
+        <Le>
+            <Kurz>Zw</Kurz>
+            <Stunden>
+                <St StZeit="" StZeitBis="">0</St>
+                <St StZeit="07:45" StZeitBis="08:30">1</St>
+                ...
+            </Stunden>
+            <Pl>
+                <Std>
+                    <PlTg>1</PlTg>
+                    <PlSt>2</PlSt>
+                    <PlFa>MU</PlFa>
+                    <PlKl>9e</PlKl>
+                    <PlLe>&amp;nbsp;</PlLe>
+                    <PlRa>M1</PlRa>
+                </Std>
+                ...
+            </Pl>
+            <Aufsichten>
+                <Aufsicht>
+                    <AuTg>1</AuTg>
+                    <AuVorStunde>1</AuVorStunde>
+                    <AuZeit>Früh</AuZeit>
+                    <AuOrt>EG/1.OG - Läufer</AuOrt>
+                    <AuUhrzeit>07:20</AuUhrzeit>
+                </Aufsicht>
+                <Aufsicht>
+                    <AuTg>2</AuTg>
+                    <AuVorStunde>3</AuVorStunde>
+                    <AuZeit>1.Hofpause</AuZeit>
+                    <AuOrt>3. und 4. OG -Läufer</AuOrt>
+                    <AuUhrzeit>09:20</AuUhrzeit>
+                </Aufsicht>
+            </Aufsichten>
+        </Le>
+        ...
+    </Lehrer>
+</splan>

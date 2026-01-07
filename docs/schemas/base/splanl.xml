@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- splanl.xml - School Schedule Template -->
+<splan>
+    <Kopf>
+        <!-- Plan type: Specifies the type of plan. "K" -> class, "L" -> teacher and "R" -> room. -->
+        <PlanArt>L</PlanArt>
+        <!-- Timestamp: The exact date and time when the schedule was generated. -->
+        <zeitstempel>dd.mm.YYYY, hh:mm</zeitstempel>
+        <!-- Filename: The name of the XML file. Typically follows the format "splanl.xml". -->
+        <datei>splanl.xml</datei>
+        <!-- Validity Start Date: Indicates the first date from which the schedule is valid. -->
+        <gueltigab>dd.mm.YYYY</gueltigab>
+        <!-- School Name: The full name of the school for which the schedule applies. -->
+        <schulname>School Name</schulname>
+        <!-- School Location: The city or specific location of the school. Can be left empty if not applicable. -->
+        <schulort>School Location</schulort>
+        <!-- Software Name: The name of the software used to generate the schedule. -->
+        <upname>Software Name</upname>
+        <!-- Module Name: The specific module of the software used, e.g., "Stundenplan" for timetable. -->
+        <upmodul>Module Name</upmodul>
+        <!-- Software Version: The version number of the software used to generate the schedule. -->
+        <upversion>Version</upversion>
+    </Kopf>
+    <FreieTage>
+        <!-- Free Days: Lists all non-working or holiday dates in YYMMDD format. -->
+        <ft>YYMMDD</ft>
+        ...
+    </FreieTage>
+    <Kalenderwochen>
+        <!-- Calendar Weeks: Defines the weeks in the school year with attributes: -->
+        <!-- KwNr: Sequential week number in the school year. -->
+        <!-- KwDatumVon: Start date of the week in DD.MM.YYYY format. -->
+        <!-- KwDatumBis: End date of the week in DD.MM.YYYY format. -->
+        <!-- KwWoche: Type of week, e.g., "A-Woche" for A week or "B-Woche" for B week. -->
+        <Kw KwNr="N" KwDatumVon="dd.mm.YYYY" KwDatumBis="dd.mm.YYYY" KwWoche="WeekType">WeekIndex</Kw>
+        ...
+    </Kalenderwochen>
+    <Schulwochen>
+        <!-- School Weeks: Maps calendar weeks to school-specific week types. -->
+        <!-- SwKw: Corresponding calendar week number. Often left empty. -->
+        <!-- SwDatum: Indicates the week type, e.g., "A-Woche" or "B-Woche". -->
+        <Sw SwKw="N" SwDatum="WeekType">WeekIndex</Sw>
+        ...
+    </Schulwochen>
+    <Lehrer>
+        <Le>
+            <!-- Teacher Short Name: Abbreviation for the teacher, e.g., "MrSmith". -->
+            <Kurz>TeacherName</Kurz>
+            <Stunden>
+                <!-- Periods: Defines the start and end times for each period. -->
+                <!-- StZeit: Start time of the period in HH:mm format. -->
+                <!-- StZeitBis: End time of the period in HH:mm format. -->
+                <!-- StZeit and StZeitBis are optional and can be left empty if not specified. -->
+                <St StZeit="HH:mm" StZeitBis="HH:mm">PeriodNumber</St>
+                ...
+            </Stunden>
+            <Sperrungen>
+                <!-- Restrictions: Specifies unavailable periods for the teacher. -->
+                <!-- SpTg: Day of the week (1=Monday, 7=Sunday). -->
+                <!-- SpSt: Period number that is restricted. -->
+                <Sp SpTg="N" SpSt="N" />
+                ...
+            </Sperrungen>
+            <Planinfo>
+                <!-- Special Notes: Additional information about specific periods. -->
+                <!-- PiTg: Day of the week (1=Monday, 7=Sunday). -->
+                <!-- PiSt: Period number. -->
+                <Pi PiTg="N" PiSt="N">Info Text</Pi>
+            </Planinfo>
+            <Pl>
+                <!-- Lessons: Detailed schedule entries for the teacher. -->
+                <!-- PlSw: School week number, e.g. "01", "02" or "0102" -->
+                <!-- PlTg: Day of the week (1=Monday, 7=Sunday). -->
+                <!-- PlSt: Period number. -->
+                <!-- PlFa: Subject code, e.g., "EN" for English. -->
+                <!-- PlKl: Class name, e.g., "5a". Can have multiple classes separated by commas or a class range denoted by a hyphen or both, e.g., "5a,5b" or "5a-5c" or "5a-5c,5d". -->
+                <!-- PlLe: Teacher code, e.g., "Ack". Can have multiple teachers separated by commas. -->
+                <!-- PlRa: Room code, e.g., "A210". -->
+                <!-- PlWo: Week type, e.g., "A" for A week or "B" for B week. Can be left empty if not specified, then the lesson applies to all weeks. -->
+                <Std>
+                    <PlSw>WeekNumber</PlSw>
+                    <PlTg>DayNumber</PlTg>
+                    <PlSt>PeriodNumber</PlSt>
+                    <PlFa>SubjectCode</PlFa>
+                    <PlKl>ClassName</PlKl>
+                    <PlLe>TeacherCode</PlLe>
+                    <PlRa>RoomCode</PlRa>
+                    <PlWo>WeekType</PlWo>
+                </Std>
+                ...
+            </Pl>
+        </Le>
+        ...
+    </Lehrer>
+</splan>

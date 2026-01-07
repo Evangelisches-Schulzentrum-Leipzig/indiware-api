@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Lehrer.xml - Mobile Teacher Schedule (VpMobil) -->
+<VpMobil>
+    <Kopf>
+        <!-- Metadata and Header Information -->
+        <!-- Plan type: Specifies the type of plan. "K" -> class and "L" -> teacher. -->
+        <planart>L</planart>
+        <!-- Timestamp: Date and time when the plan was generated (DD.MM.YYYY, HH:mm) -->
+        <zeitstempel>dd.mm.YYYY, hh:mm</zeitstempel>
+        <!-- Plan Date: Display date for the plan (e.g., "Donnerstag, 08. Januar 2026") -->
+        <DatumPlan>Day, DD. Month YYYY</DatumPlan>
+        <!-- Filename: XML file name (format: PlanLeYYYYMMDD.xml) -->
+        <datei>PlanLeYYYYMMDD.xml</datei>
+        <!-- Not clear for what this is. -->
+        <nativ>1</nativ>
+        <!-- Week Number: The current school week (1-based index) -->
+        <woche>N</woche>
+        <!-- Days Per Week: Number of school days in a week (typically 5) -->
+        <tageprowoche>5</tageprowoche>
+        <!-- School Number: Identifier for the school (can be empty) -->
+        <schulnummer/>
+    </Kopf>
+    <FreieTage>
+        <!-- Free Days: Lists all non-working or holiday dates in YYMMDD format. -->
+        <ft>YYMMDD</ft>
+        ...
+    </FreieTage>
+    <Klassen>
+        <Kl>
+            <!-- Teacher Code: Abbreviation for the teacher, e.g., "Ack". -->
+            <Kurz>TeacherCode</Kurz>
+            <!-- Hash: Never seen used -->
+            <Hash></Hash>
+            <KlStunden>
+                <!-- Periods: Defines the start and end times for each period. -->
+                <!-- StZeit: Start time of the period in HH:mm format. -->
+                <!-- StZeitBis: End time of the period in HH:mm format. -->
+                <KlSt StZeit="HH:mm" StZeitBis="HH:mm">PeriodNumber</KlSt>
+                ...
+            </KlStunden>
+            <Pl>
+                <!-- Lessons: Detailed schedule entries for the teacher. -->
+                <!-- St: Period number, can be range like "3-4" or single like "1" -->
+                <!-- Beginn: Start time of the lesson in HH:mm format. -->
+                <!-- Ende: End time of the lesson in HH:mm format. -->
+                <!-- Fa: Subject code, e.g., "EN" for English. -->
+                <!-- Fa: "\-\-\-" indicates cancelled lesson -->
+                <!-- Fa: fageaendert="ae" attribute set when subject changed -->
+                <!-- Le: Teacher code, e.g., "Ack". Can have multiple teachers separated by commas. -->
+                <!-- Le: Format "(TeacherCode)" indicates absent teacher (in parentheses for self-study) -->
+                <!-- Le: Empty when lesson cancelled -->
+                <!-- Le: legeaendert="ae" attribute set when teacher changed -->
+                <!-- Ra: Room code, e.g., "A210". -->
+                <!-- Ra: Empty when lesson cancelled -->
+                <!-- Ra: rageaendert="ae" attribute set when room changed -->
+                <!-- Nr: Unique Lesson Identifier -->
+                <!-- If: Additional info text - Common patterns: -->
+                <!-- If: "fällt aus" / "{Subject} {Teacher} fällt aus" - lesson cancelled -->
+                <!-- If: "für {Subject} {Teacher}" - substituting for (e.g., "für REL Wen") -->
+                <!-- If: "verlegt nach St.{N}" - moved to period N -->
+                <!-- If: "verlegt von St.{N}; {Subject} {Teacher} fällt aus" - moved from period, original cancelled -->
+                <!-- If: "selbst./siehe itslearning" - self-study via online platform -->
+                <!-- If: "selbst./siehe itslearning, zu Hause bearbeiten" - self-study at home -->
+                <!-- If: "gehalten am {Day} ({DD.MM.}) St.{N}" - lesson already held (e.g., "gehalten am Mo (05.01.) St.5") -->
+                <!-- If: "alle in {Room}" - all students in specific room (e.g., "alle in 1.18") -->
+                <!-- If: "Projekt" - project work -->
+                <!-- If: "{Subject} {Teacher} verlegt nach St.{N}" - specific lesson moved -->
+                <!-- If: Can combine patterns with ";" or "," (e.g., "für EN Sr, Projekt") -->
+                <!-- If: Can be empty string -->
+                <Std>
+                    <St>PeriodNumber</St>
+                    <Beginn>StartTime</Beginn>
+                    <Ende>EndTime</Ende>
+                    <Fa>SubjectCode</Fa>
+                    <Le>TeacherCode</Le>
+                    <Ra>RoomCode</Ra>
+                    <Nr>LessonId</Nr>
+                    <If>InfoField</If>
+                </Std>
+                ...
+            </Pl>
+            <Aufsichten>
+                <!-- Supervision duties assigned to the teacher -->
+                <Aufsicht AuAe="AuVertretung">
+                    <!-- Supervision duty assigned to the teacher -->
+                    <!-- AuAe: Indicates if the supervision is a change. "AuVertretung" for substitution duty, "AuAusfall" for cancellation -->
+                    <!-- AuTag: Day of the week (1=Monday, 7=Sunday). -->
+                    <!-- AuVorStunde: Period before which the supervision takes place. -->
+                    <!-- AuUhrzeit: Time when the supervision starts (HH:mm). -->
+                    <!-- AuZeit: Description of the supervision time (e.g., "1.Hofpause"). -->
+                    <!-- AuOrt: Location of the supervision duty. -->
+                    <!-- AuFuer: Indicates for whom the supervision is assigned. Only available when AuAe is set and is substitution. -->
+                    <!-- AuInfo: Additional information about the supervision duty. -->
+                    <AuTag>Day</AuTag>
+                    <AuVorStunde>Lesson</AuVorStunde>
+                    <AuUhrzeit>Time</AuUhrzeit>
+                    <AuZeit>TimeDescription</AuZeit>
+                    <AuOrt>Location</AuOrt>
+                    <AuFuer>ForWhom</AuFuer>
+                    <AuInfo>AdditionalInfo</AuInfo>
+                </Aufsicht>
+                ...
+            </Aufsichten>
+        </Kl>
+        ...
+    </Klassen>
+</VpMobil>

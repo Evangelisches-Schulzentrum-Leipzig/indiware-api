@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<splan>
+    <Kopf>
+        <PlanArt>L</PlanArt>
+        <zeitstempel>05.01.2026, 10:32</zeitstempel>
+        <datei>SPlanLe_Basis.xml</datei>
+        <schulname>Evangelisches Schulzentrum Leipzig</schulname>
+        <schulort>Leipzig</schulort>
+        <upname>Indiware Unterrichtsplaner</upname>
+        <upmodul>Stundenplan</upmodul>
+        <upversion>7.0.6.1</upversion>
+    </Kopf>
+    <Basisdaten>
+        <BaDatumVon>12.01.2026</BaDatumVon>
+        <BaDatumBis>06.02.2026</BaDatumBis>
+        <BaSwVon>19</BaSwVon>
+        <BaSwBis>22</BaSwBis>
+        <BaTageProWoche>5</BaTageProWoche>
+    </Basisdaten>
+    <FreieTage>
+        <ft>250808</ft>
+        <ft feier="1">251003</ft>
+        ...
+    </FreieTage>
+    <Schulwochen>
+        <Sw SwKw="33" SwDatumVon="11.08.2025" SwDatumBis="15.08.2025" SwWo="A">1</Sw>
+        <Sw SwKw="34" SwDatumVon="18.08.2025" SwDatumBis="22.08.2025" SwWo="B">2</Sw>
+        ...
+    </Schulwochen>
+    <Lehrer>
+        <Le>
+            <Kurz>.Al</Kurz>
+            <Hash></Hash>
+        </Le>
+        ...
+    </Lehrer>
+</splan>

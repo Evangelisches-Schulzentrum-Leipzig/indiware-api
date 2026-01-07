@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<splan>
+    <Kopf>
+        <PlanArt>R</PlanArt>
+        <zeitstempel>05.01.2026, 10:33</zeitstempel>
+        <datei>SPlanRa_Sw19.xml</datei>
+        <schulname>Evangelisches Schulzentrum Leipzig</schulname>
+        <schulort>Leipzig</schulort>
+        <upname>Indiware Unterrichtsplaner</upname>
+        <upmodul>Stundenplan</upmodul>
+        <upversion>7.0.6.1</upversion>
+    </Kopf>
+    <Basisdaten>
+        <BaDatumVon>12.01.2026</BaDatumVon>
+        <BaDatumBis>06.02.2026</BaDatumBis>
+        <BaSwVon>19</BaSwVon>
+        <BaSwBis>22</BaSwBis>
+        <BaTageProWoche>5</BaTageProWoche>
+    </Basisdaten>
+    <FreieTage>
+        <ft>250808</ft>
+        <ft feier="1">251003</ft>
+        ...
+    </FreieTage>
+    <Schulwochen>
+        <Sw SwKw="33" SwDatumVon="11.08.2025" SwDatumBis="15.08.2025" SwWo="A">1</Sw>
+        <Sw SwKw="34" SwDatumVon="18.08.2025" SwDatumBis="22.08.2025" SwWo="B">2</Sw>
+        ...
+    </Schulwochen>
+    <Raeume>
+        <Ra>
+            <Kurz>1.03</Kurz>
+            <Stunden>
+                <St StZeit="" StZeitBis="">0</St>
+                ...
+            </Stunden>
+            <Pl>
+                <Std>
+                    <PlTg>1</PlTg>
+                    <PlSt>1</PlSt>
+                    <PlFa>PH</PlFa>
+                    <PlKl>8c</PlKl>
+                    <PlLe>Hp</PlLe>
+                    <PlRa>1.03</PlRa>
+                </Std>
+                ...
+            </Pl>
+        </Ra>
+        ...
+    </Raeume>
+</splan>

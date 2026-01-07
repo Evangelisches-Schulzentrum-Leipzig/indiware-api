@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WplanVp>
+    <Kopf>
+        <planart>K</planart>
+        <zeitstempel>05.01.2026, 09:40</zeitstempel>
+        <DatumPlan>Montag, 05. Januar 2026</DatumPlan>
+        <datei>WPlanKl_20260105.xml</datei>
+    </Kopf>
+    <FreieTage>
+        <ft>250801</ft>
+        ...
+    </FreieTage>
+    <Klassen>
+        <Kl>
+            <Kurz>1a</Kurz>
+            <Kurse>
+                <Ku>
+                    <KKz KLe=".Kle">fit03</KKz>
+                </Ku>
+                ...
+            </Kurse>
+            <Unterricht>
+                <Ue>
+                    <UeNr UeLe=".Kle" UeFa="REL">3075</UeNr>
+                </Ue>
+                ...
+            </Unterricht>
+            <Pl>
+                <Std>
+                    <St>1</St>
+                    <Fa>D</Fa>
+                    <Le>.Hof</Le>
+                    <Ra>1.22</Ra>
+                    <Nr>3813</Nr>
+                    <If></If>
+                </Std>
+                ...
+            </Pl>
+        </Kl>
+        ...
+    </Klassen>
+</WplanVp>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- VplanKl.xml - Class Change Plan Template (Vertretungsplan Klassen) -->
+<vp>
+    <kopf>
+        <!-- Filename format: VplanKl{YYYYMMDD}.xml -->
+        <datei>VplanKlYYYYMMDD.xml</datei>
+        <!-- Day name, date with trailing space -->
+        <titel>Weekday, D. Month YYYY </titel>
+        <!-- School name -->
+        <schulname>School Name</schulname>
+        <!-- Timestamp when plan was generated: DD.MM.YYYY, HH:mm -->
+        <datum>dd.mm.YYYY, hh:mm</datum>
+        <kopfinfo>
+            <!-- Absent teachers (comma-separated) -->
+            <abwesendl>Teacher1, Teacher2, ...</abwesendl>
+            <!-- Teachers with changes (comma-separated) -->
+            <aenderungl>Teacher1, Teacher2, ...</aenderungl>
+            <!-- Classes with changes (comma-separated) -->
+            <aenderungk>Class1, Class2, ...</aenderungk>
+        </kopfinfo>
+    </kopf>
+    <freietage>
+        <!-- Free days in YYMMDD format -->
+        <ft>YYMMDD</ft>
+        ...
+    </freietage>
+    <haupt>
+        <!-- Main substitution entries for classes -->
+        <aktion>
+            <!-- Class or course identifier, can include course info like "9e/ inf1" -->
+            <klasse>ClassName</klasse>
+            <!-- Period number, can be range like "3-4" or single like "1" -->
+            <stunde>N</stunde>
+            <!-- Subject code -->
+            <!-- "\-\-\-" indicates cancelled lesson -->
+            <!-- @fageaendert="ae" when subject changed -->
+            <fach fageaendert="ae">SubjectCode</fach>
+            <!-- Teacher code -->
+            <!-- Format "(TeacherCode)" indicates absent teacher (in parentheses for self-study) -->
+            <!-- Empty when lesson cancelled -->
+            <!-- @legeaendert="ae" when teacher changed -->
+            <lehrer legeaendert="ae">TeacherCode</lehrer>
+            <!-- Room code -->
+            <!-- Empty when lesson cancelled or location TBD -->
+            <!-- @rageaendert="ae" when room changed -->
+            <raum rageaendert="ae">RoomCode</raum>
+            <!-- Additional info text - Common patterns: -->
+            <!-- "fällt aus" / "{Subject} {Teacher} fällt aus" - lesson cancelled -->
+            <!-- "für {Subject} {Teacher}" - substituting for (e.g., "für REL Wen") -->
+            <!-- "verlegt nach St.{N}" - moved to period N -->
+            <!-- "verlegt von St.{N}; {Subject} {Teacher} fällt aus" - moved from period, original cancelled -->
+            <!-- "selbst./siehe itslearning" - self-study via online platform -->
+            <!-- "selbst./siehe itslearning, zu Hause bearbeiten" - self-study at home -->
+            <!-- "gehalten am {Day} ({DD.MM.}) St.{N}" - lesson already held (e.g., "gehalten am Mo (05.01.) St.5") -->
+            <!-- "alle in {Room}" - all students in specific room (e.g., "alle in 1.18") -->
+            <!-- "Projekt" - project work -->
+            <!-- "{Subject} {Teacher} verlegt nach St.{N}" - specific lesson moved -->
+            <!-- Can combine patterns with ";" or "," (e.g., "für EN Sr, Projekt") -->
+            <!-- Can be empty string -->
+            <info>Additional information</info>
+        </aktion>
+        ...
+    </haupt>
+    <klausuren>
+        <!-- Exam entries -->
+        <klausur>
+            <!-- Grade level (e.g., 11, 12) -->
+            <jahrgang>GradeLevel</jahrgang>
+            <!-- Course identifier -->
+            <kurs>CourseCode</kurs>
+            <!-- Course teacher -->
+            <kursleiter>TeacherCode</kursleiter>
+            <!-- Period when exam takes place -->
+            <stunde>N</stunde>
+            <!-- Start time HH:mm -->
+            <beginn>HH:mm</beginn>
+            <!-- Duration in minutes -->
+            <dauer>Minutes</dauer>
+            <!-- Exam info (optional) -->
+            <kinfo>Exam information</kinfo>
+        </klausur>
+        ...
+    </klausuren>
+</vp>

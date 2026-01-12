@@ -39,8 +39,10 @@
                     <PlSt>1</PlSt>
                     <PlFa>D</PlFa>
                     <PlKl>1a</PlKl>
+                    <PlKu>inf2</PlKu>
                     <PlLe>.Hof</PlLe>
                     <PlRa>1.22</PlRa>
+                    <PlWo>A</PlWo>
                 </Std>
                 ...
             </Pl>

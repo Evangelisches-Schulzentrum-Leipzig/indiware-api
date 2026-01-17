@@ -1,7 +1,7 @@
 -- MariaDB 12+
-CREATE DATABASE IF NOT EXISTS timetable_v3 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS timetable CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE timetable_v3;
+USE timetable;
 
 -- ==========================================
 -- 1. Base Data (teachers, classes, subjects, buildings, rooms, periods, weekType, weeks, holidays, planType, queryMetadata)

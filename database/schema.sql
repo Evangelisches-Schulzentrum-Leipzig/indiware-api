@@ -1,131 +1,205 @@
--- Optional: create and use a database (adjust name if needed)
-CREATE DATABASE IF NOT EXISTS timetable CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- MariaDB 12+
+CREATE DATABASE IF NOT EXISTS timetable_v2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE timetable;
+USE timetable_v2;
 
-SET NAMES utf8mb4;
-
-SET
-	time_zone = '+00:00';
-
--- Classes (must be created before foreign key references)
-CREATE TABLE IF NOT EXISTS
-	classes (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		name VARCHAR(32) NOT NULL, -- e.g. "10A"
-		UNIQUE KEY uq_classes_name (name)
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
--- Class groups (self-referencing many-to-many)
-CREATE TABLE IF NOT EXISTS
-	class_groups_fk (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		parent_class_id BIGINT UNSIGNED NOT NULL,
-		child_class_id BIGINT UNSIGNED NOT NULL,
-		UNIQUE KEY uq_class_groups_fk (parent_class_id, child_class_id),
-		CONSTRAINT fk_class_groups_parent FOREIGN KEY (parent_class_id) REFERENCES classes (id) ON DELETE CASCADE ON UPDATE CASCADE,
-		CONSTRAINT fk_class_groups_child FOREIGN KEY (child_class_id) REFERENCES classes (id) ON DELETE CASCADE ON UPDATE CASCADE
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
--- Subjects (must be created before foreign key references)
-CREATE TABLE IF NOT EXISTS
-	subjects (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		short_name VARCHAR(32) NOT NULL, -- e.g. "MA"
-		long_name VARCHAR(128) NULL, -- e.g. "Mathematics"
-		UNIQUE KEY uq_subjects_short_name (short_name)
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
--- Subject groups (self-referencing many-to-many)
-CREATE TABLE IF NOT EXISTS
-	subject_groups_fk (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		parent_subject_id BIGINT UNSIGNED NOT NULL,
-		child_subject_id BIGINT UNSIGNED NOT NULL,
-		UNIQUE KEY uq_subject_groups_fk (parent_subject_id, child_subject_id),
-		CONSTRAINT fk_subject_groups_parent FOREIGN KEY (parent_subject_id) REFERENCES subjects (id) ON DELETE CASCADE ON UPDATE CASCADE,
-		CONSTRAINT fk_subject_groups_child FOREIGN KEY (child_subject_id) REFERENCES subjects (id) ON DELETE CASCADE ON UPDATE CASCADE
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
--- Teachers
+-- ==========================================
+-- 1. STATIC METADATA (Lookups)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS
 	teachers (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		short_name VARCHAR(32) NOT NULL, -- e.g. "SMI"
-		UNIQUE KEY uq_teachers_short_name (short_name)
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		short_name VARCHAR(10) NOT NULL UNIQUE
+	) ENGINE = InnoDB PAGE_COMPRESSED = 1;
 
--- Rooms
+CREATE TABLE IF NOT EXISTS
+	subjects (
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		short_name VARCHAR(10) NOT NULL UNIQUE,
+		long_name VARCHAR(100) NULL
+	) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS
+	buildings (
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		name VARCHAR(64) NOT NULL UNIQUE,
+		address VARCHAR(255) NULL
+	) ENGINE = InnoDB PAGE_COMPRESSED = 1;
+
 CREATE TABLE IF NOT EXISTS
 	rooms (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		name VARCHAR(128) NOT NULL, -- e.g. "3.12"
-		description VARCHAR(255) NULL, -- e.g. "Physics Lab"
-		building VARCHAR(64) NULL, -- e.g. "Main Building"
-		level VARCHAR(64) NULL, -- e.g. "1", "Ground"
-		address VARCHAR(255) NULL,
-		capacity INT UNSIGNED NULL,
-		features JSON NULL, -- optional: equipment/features
-		UNIQUE KEY uq_rooms_name (name, building, level),
-		KEY idx_rooms_building (building)
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		name VARCHAR(20) NOT NULL,
+		building_id SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+		level VARCHAR(16) NULL,
+		CONSTRAINT fk_room_building FOREIGN KEY (building_id) REFERENCES buildings (id) ON DELETE CASCADE,
+		UNIQUE KEY uq_room_loc (name, building_id)
+	) ENGINE = InnoDB;
 
--- Periods (lesson slots)
+CREATE TABLE IF NOT EXISTS
+	classes (
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		name VARCHAR(20) NOT NULL UNIQUE
+	) ENGINE = InnoDB;
+
 CREATE TABLE IF NOT EXISTS
 	periods (
-		number INT UNSIGNED PRIMARY KEY, -- 1,2,3,...
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		number TINYINT UNSIGNED NOT NULL,
 		start_time TIME NOT NULL,
 		end_time TIME NOT NULL,
-		KEY idx_periods_times (start_time, end_time)
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+		UNIQUE KEY uq_period_number (number, start_time, end_time)
+	) ENGINE = InnoDB;
 
--- Holidays
+-- ==========================================
+-- 2. DEFINITIONS (Structural Data)
+-- ==========================================
 CREATE TABLE IF NOT EXISTS
-	holidays (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		name VARCHAR(128) NOT NULL,
-		start_date DATE NOT NULL,
-		end_date DATE NOT NULL,
-		KEY idx_holidays_range (start_date, end_date)
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+	lesson_definitions (
+		id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		subject_id SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+		teacher_id SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+		room_id SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+		CONSTRAINT fk_def_sub FOREIGN KEY (subject_id) REFERENCES subjects (id),
+		CONSTRAINT fk_def_tea FOREIGN KEY (teacher_id) REFERENCES teachers (id),
+		CONSTRAINT fk_def_roo FOREIGN KEY (room_id) REFERENCES rooms (id),
+		UNIQUE KEY uq_def (subject_id, teacher_id, room_id)
+	) ENGINE = InnoDB;
 
--- Timetable entries (daily schedule)
 CREATE TABLE IF NOT EXISTS
-	timetable_entries (
-		id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-		day DATE NOT NULL,
-		period_number INT UNSIGNED NOT NULL,
-		class_id BIGINT UNSIGNED NOT NULL,
-		subject_id BIGINT UNSIGNED NULL,
-		teacher_id BIGINT UNSIGNED NULL,
-		room_id BIGINT UNSIGNED NULL,
-		-- Substitution details (OpenAPI substitutionInfo)
-		original_teacher_id BIGINT UNSIGNED NULL, -- Teacher originally planned
-		original_room_id BIGINT UNSIGNED NULL, -- Room originally planned
-		change_reason VARCHAR(255) NULL, -- Reason for change
-		substitution_notes VARCHAR(255) NULL, -- Notes specific to substitution
+	lesson_classes (
+		definition_id INT UNSIGNED NOT NULL,
+		class_id SMALLINT UNSIGNED NOT NULL,
+		PRIMARY KEY (definition_id, class_id),
+		CONSTRAINT fk_lc_def FOREIGN KEY (definition_id) REFERENCES lesson_definitions (id) ON DELETE CASCADE,
+		CONSTRAINT fk_lc_cla FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
+	) ENGINE = InnoDB;
+
+-- ==========================================
+-- 3. PLAN DATA (The "Hot" Tables)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS
+	timetable_instances (
+		id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY,
+		date DATE NOT NULL,
+		period_number TINYINT UNSIGNED NOT NULL,
+		definition_id INT UNSIGNED NOT NULL,
 		status ENUM(
 			'scheduled',
 			'substituted',
 			'cancelled',
 			'time_change',
-			'room_change'
-		) NOT NULL DEFAULT 'scheduled',
-		notes VARCHAR(255) NULL,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-		UNIQUE KEY uq_entries_unique (day, period_number, class_id),
-		KEY idx_entries_day_class (day, class_id),
-		KEY idx_entries_day_teacher (day, teacher_id),
-		KEY idx_entries_day_room (day, room_id),
-		KEY idx_entries_day (day),
-		KEY idx_entries_original_teacher (original_teacher_id),
-		KEY idx_entries_original_room (original_room_id),
-		CONSTRAINT fk_entries_period FOREIGN KEY (period_number) REFERENCES periods (number) ON DELETE RESTRICT ON UPDATE CASCADE,
-		CONSTRAINT fk_entries_class FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE RESTRICT ON UPDATE CASCADE,
-		CONSTRAINT fk_entries_subject FOREIGN KEY (subject_id) REFERENCES subjects (id) ON DELETE SET NULL ON UPDATE CASCADE,
-		CONSTRAINT fk_entries_teacher FOREIGN KEY (teacher_id) REFERENCES teachers (id) ON DELETE SET NULL ON UPDATE CASCADE,
-		CONSTRAINT fk_entries_room FOREIGN KEY (room_id) REFERENCES rooms (id) ON DELETE SET NULL ON UPDATE CASCADE,
-		CONSTRAINT fk_entries_original_teacher FOREIGN KEY (original_teacher_id) REFERENCES teachers (id) ON DELETE SET NULL ON UPDATE CASCADE,
-		CONSTRAINT fk_entries_original_room FOREIGN KEY (original_room_id) REFERENCES rooms (id) ON DELETE SET NULL ON UPDATE CASCADE
-	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+			'room_change',
+			'exam'
+		) DEFAULT 'scheduled',
+		-- Invisible columns for internal auditing without polluting API responses
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP INVISIBLE,
+		day_of_week TINYINT AS (DAYOFWEEK(date)) VIRTUAL,
+		UNIQUE KEY uq_date_period_def (date, period_number, definition_id),
+		INDEX idx_lookup_date_class (date, period_number), -- Faster daily plan lookups
+		INDEX idx_date_id (date, id), -- Added index for foreign key reference
+		CONSTRAINT fk_ti_per FOREIGN KEY (period_number) REFERENCES periods (number),
+		CONSTRAINT fk_ti_def FOREIGN KEY (definition_id) REFERENCES lesson_definitions (id)
+	) ENGINE = InnoDB
+WITH
+	SYSTEM VERSIONING PAGE_COMPRESSED = 1;
+
+-- PARTITION BY RANGE (YEAR(date)) (
+--     PARTITION p2024 VALUES LESS THAN (2025),
+--     PARTITION p2025 VALUES LESS THAN (2026),
+--     PARTITION p2026 VALUES LESS THAN (2027),
+--     PARTITION p_future VALUES LESS THAN MAXVALUE
+-- );
+-- Separate table for extra substitution info
+CREATE TABLE IF NOT EXISTS
+	substitution_details (
+		instance_id INT UNSIGNED NOT NULL,
+		instance_date DATE NOT NULL,
+		original_teacher_id SMALLINT UNSIGNED NULL,
+		original_room_id SMALLINT UNSIGNED NULL,
+		change_reason VARCHAR(255) NULL,
+		notes TEXT NULL,
+		PRIMARY KEY (instance_date, instance_id),
+		CONSTRAINT fk_det_inst FOREIGN KEY (instance_date, instance_id) REFERENCES timetable_instances (date, id) ON DELETE CASCADE
+	) ENGINE = InnoDB
+WITH
+	SYSTEM VERSIONING PAGE_COMPRESSED = 1;
+
+CREATE TABLE IF NOT EXISTS
+	supervisions (
+		id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		date DATE NOT NULL,
+		teacher_id SMALLINT UNSIGNED NOT NULL,
+		location VARCHAR(100) NOT NULL,
+		start_time TIME NOT NULL,
+		end_time TIME NOT NULL,
+		info_text VARCHAR(255) NULL,
+		UNIQUE KEY uq_date_id (date, id),
+		CONSTRAINT fk_sup_tea FOREIGN KEY (teacher_id) REFERENCES teachers (id)
+	) ENGINE = InnoDB
+WITH
+	SYSTEM VERSIONING PAGE_COMPRESSED = 1;
+
+-- PARTITION BY RANGE (YEAR(date)) (
+--     PARTITION p2024 VALUES LESS THAN (2025),
+--     PARTITION p2025 VALUES LESS THAN (2026),
+--     PARTITION p2026 VALUES LESS THAN (2027),
+--     PARTITION p_future VALUES LESS THAN MAXVALUE
+-- );
+-- ==========================================
+-- 4. UTILITY & HOLIDAYS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS
+	plan_metadata (
+		id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		reference_date DATE UNIQUE NOT NULL, -- Date this plan is valid for
+		generated_at TIMESTAMP NOT NULL, -- When this plan was generated
+		plan_type VARCHAR(50)
+	) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS
+	holidays (
+		id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+		name VARCHAR(100) NULL,
+		start_date DATE NOT NULL,
+		end_date DATE NOT NULL,
+		UNIQUE KEY idx_holiday_range (start_date, end_date)
+	) ENGINE = InnoDB;
+
+-- ==========================================
+-- 5. Placeholder values for no teacher/subject/room
+-- ==========================================
+INSERT INTO
+	teachers (id, short_name)
+VALUES
+	(1, 'N/A') ON DUPLICATE KEY
+UPDATE short_name = 'N/A';
+
+INSERT INTO
+	subjects (id, short_name, long_name)
+VALUES
+	(1, 'N/A', 'Not Assigned') ON DUPLICATE KEY
+UPDATE short_name = 'N/A',
+long_name = 'Not Assigned';
+
+INSERT INTO
+	buildings (id, name)
+VALUES
+	(1, 'N/A') ON DUPLICATE KEY
+UPDATE name = 'N/A';
+
+INSERT INTO
+	rooms (id, name, building_id)
+VALUES
+	(1, 'N/A', 1) ON DUPLICATE KEY
+UPDATE name = 'N/A',
+building_id = 1;
+
+-- Set Auto_Increment to start from 2
+ALTER TABLE teachers AUTO_INCREMENT = 2;
+
+ALTER TABLE subjects AUTO_INCREMENT = 2;
+
+ALTER TABLE rooms AUTO_INCREMENT = 2;
+
+ALTER TABLE buildings AUTO_INCREMENT = 2;

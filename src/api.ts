@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import { queryClasses, querySubjects, queryRooms, queryTeachers, queryAvailableDates, queryLatestDate, queryHolidays, queryPeriods, queryDailyClassPlan, queryDailyTeacherPlan, queryDailyRoomPlan, queryWeeklyClassPlan, queryWeeklyTeacherPlan, queryWeeklyRoomPlan, updateQueryResults } from './db.js';
-import { query, parsedData } from './query/query.js';
+import { query, parsedData, PlanType } from './query/query.js';
 
 config();
 
@@ -369,10 +369,10 @@ app.get("/query", async (req, res) => {
         if (Object.keys(req.query).length === 0) {
             var response: { [key: string]: parsedData } = {};
             for (const date of ["20251215", "20251216", "20251217", "20251218", "20251219"]) {
-                let data = await query(date, false);
+                let data = await query(date, PlanType.BasePlan_Class);
                 await updateQueryResults(data);
                 response[date] = data;
-                data = await query(date, true);
+                data = await query(date, PlanType.BasePlan_Teacher);
                 await updateQueryResults(data);
                 response[date + "_teacher"] = data;
             }
@@ -381,7 +381,7 @@ app.get("/query", async (req, res) => {
             var currentDate = new Date();
             const date = (req.query['date'] as string | undefined) || currentDate.toISOString().split('T')[0];
             const teacher = Object.keys(req.query).includes('teacher') ? true : false;
-            const data = await query(date, teacher);
+            const data = await query(date, teacher ? PlanType.BasePlan_Teacher : PlanType.BasePlan_Class);
             await updateQueryResults(data);
             res.json(data);
         }

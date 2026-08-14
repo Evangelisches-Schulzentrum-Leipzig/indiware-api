@@ -26,6 +26,7 @@ var types = [
 
 var date = "20260817";
 var week = "35";
+var outputData = {};
 for (const planType of types) {
     const baseUrl = "https://stundenplan24.de/" + process.env['INDIWARE_SCHOOL_ID'] + "/";
     let headers;
@@ -103,18 +104,21 @@ for (const planType of types) {
     }
     const parser = new DOMParser();
     let data = parser.parseFromString(await content.text(), "application/xml");
-    // console.log(`Fetched ${planType} plan: ${data}`);
     var header = parseHeader(data.querySelector("Kopf") || data.querySelector("kopf"));
     var dataObj = parseOtherdata(data);
     var changes = parseChanges(data);
     var klausuren = parseKlausuren(data);
     var mainData = parseMainData(data);
-    console.log(`Parsed ${planType} plan: ${JSON.stringify(mainData)}`);
-    console.log(`Parsed ${planType} plan header: ${JSON.stringify(header)}`);
-    console.log(`Parsed ${planType} plan other data: ${JSON.stringify(dataObj)}`);
-    console.log(`Parsed ${planType} plan changes: ${JSON.stringify(changes)}`);
-    console.log(`Parsed ${planType} plan klausuren: ${JSON.stringify(klausuren)}`);
+    
+    outputData[planType] = {
+        header: header,
+        otherdata: dataObj,
+        changes: changes,
+        klausuren: klausuren,
+        mainData: mainData
+    };
 }
+console.log(JSON.stringify(outputData, null, 2));
 
 function parseHeader(data) {
     return {
@@ -345,4 +349,28 @@ function parseChanges(data) {
         });
     }
     return changes;
+}
+
+function combineData(data) {
+    var combined = {
+        sourcesMetadata: [],
+        changes: [],
+        klausuren: [],
+        dayData: [],
+        freietage: [],
+        schulwochen: [],
+        kalenderwochen: [],
+        weeklyData: [],
+        basisdaten: {
+            datumvon: null,
+            datumbis: null,
+            swvon: null,
+            swbis: null,
+            tageprowoche: null
+        }
+    };
+
+    
+
+    return combined;
 }

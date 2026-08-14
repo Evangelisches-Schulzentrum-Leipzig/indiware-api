@@ -129,7 +129,7 @@ for (const planType of types) {
         mainData: mainData
     };
 }
-console.log(JSON.stringify(outputData, null, 2));
+console.log(JSON.stringify(combineData(outputData), null, 2));
 
 /**
  * 
@@ -483,71 +483,141 @@ function combineData(data) {
         }
     };
 
-    for (const planType in data) {
+    for (const planType of Object.keys(data)) {
         const planData = data[planType];
+
+        // Combine source headers, changes, exams, holidays, school weeks, and calendar weeks
+        // by appending the corresponding arrays from every successfully fetched source.
         combined.sourcesMetadata.push(planData.header);
         combined.changes.push(...planData.changes);
         combined.klausuren.push(...planData.klausuren);
-        combined.dayData.push(...planData.mainData);
         combined.freietage.push(...planData.otherdata.freietage);
         combined.schulwochen.push(...planData.otherdata.schulwochen);
         combined.kalenderwochen.push(...planData.otherdata.kalenderwochen);
-        combined.weeklyData.push(...planData.mainData);
-        
-        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.datumvon) {
-            if (combined.basisdaten.datumvon !== null && planData.otherdata.basisdaten.datumvon != combined.basisdaten.datumvon) {
-                console.warn(`Warning: Conflicting basisdaten.datumvon values: ${combined.basisdaten.datumvon} and ${planData.otherdata.basisdaten.datumvon}`);
+
+        // Basisdaten are combined field by field. The first non-null value wins;
+        // later different values are reported because sources can describe different plan ranges.
+        const sourceBasisdaten = planData.otherdata.basisdaten;
+        const basisFields = /** @type {Array<"datumvon"|"datumbis"|"swvon"|"swbis"|"tageprowoche">} */ (["datumvon", "datumbis", "swvon", "swbis", "tageprowoche"]);
+        for (const field of basisFields) {
+            const value = sourceBasisdaten[field];
+            if (value === null) continue;
+            if (combined.basisdaten[field] !== null && !sameValue(combined.basisdaten[field], value)) {
+                console.warn(`Warning: Conflicting basisdaten.${field} values: ${combined.basisdaten[field]} and ${value}`);
             }
-            combined.basisdaten = planData.otherdata.basisdaten;
+            if (combined.basisdaten[field] === null) {
+                Object.assign(combined.basisdaten, {[field]: value});
+            }
         }
-        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.datumbis) {
-            if (combined.basisdaten.datumbis !== null && planData.otherdata.basisdaten.datumbis != combined.basisdaten.datumbis) {
-                console.warn(`Warning: Conflicting basisdaten.datumbis values: ${combined.basisdaten.datumbis} and ${planData.otherdata.basisdaten.datumbis}`);
-            }
-            combined.basisdaten = planData.otherdata.basisdaten;
-        }
-        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.swvon) {
-            if (combined.basisdaten.swvon !== null && planData.otherdata.basisdaten.swvon != combined.basisdaten.swvon) {
-                console.warn(`Warning: Conflicting basisdaten.swvon values: ${combined.basisdaten.swvon} and ${planData.otherdata.basisdaten.swvon}`);
-            }
-            combined.basisdaten = planData.otherdata.basisdaten;
-        }
-        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.swbis) {
-            if (combined.basisdaten.swbis !== null && planData.otherdata.basisdaten.swbis != combined.basisdaten.swbis) {
-                console.warn(`Warning: Conflicting basisdaten.swbis values: ${combined.basisdaten.swbis} and ${planData.otherdata.basisdaten.swbis}`);
-            }
-            combined.basisdaten = planData.otherdata.basisdaten;
-        }
-        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.tageprowoche) {
-            if (combined.basisdaten.tageprowoche !== null && planData.otherdata.basisdaten.tageprowoche != combined.basisdaten.tageprowoche) {
-                console.warn(`Warning: Conflicting basisdaten.tageprowoche values: ${combined.basisdaten.tageprowoche} and ${planData.otherdata.basisdaten.tageprowoche}`);
-            }
-            combined.basisdaten = planData.otherdata.basisdaten;
+
+        // Weekly sources populate weeklyData. Mobile and base sources populate dayData;
+        // change sources are represented through combined.changes instead of mainData.
+        if (planType.startsWith("Weekly")) {
+            combined.weeklyData.push(...planData.mainData);
+        } else if (planType.startsWith("VpMobil") || planType.startsWith("BasePlan")) {
+            combined.dayData.push(...planData.mainData);
         }
     }
 
-    // Removing duplicate entries from freietage, schulwochen, and kalenderwochen
-    combined.freietage = Array.from(new Set(combined.freietage.map(ft => JSON.stringify(ft)))).map(ft => JSON.parse(ft));
-    combined.schulwochen = Array.from(new Set(combined.schulwochen.map(sw => JSON.stringify(sw)))).map(sw => JSON.parse(sw));
-    combined.kalenderwochen = Array.from(new Set(combined.kalenderwochen.map(kw => JSON.stringify(kw)))).map(kw => JSON.parse(kw));
+    // Remove duplicate holidays using value, parsed date, and holiday flag.
+    combined.freietage = uniqueBy(combined.freietage, ["value", "date", "feiertag"]);
 
-    // Removing duplicate entries from dayData and weeklyData based on name
-    // Combining plan, stunden, kurse, unterricht, aufsichten, sperrungen, and planinfo for entries with the same name
-    // But removing duplicates inside each of those arrays based on their unique identifiers:
-    // plan: tag (weekly), stunde, fach, lehrer, klasse, kurs, raum, beginn and ende
-    // stunden: stunde, beginn and ende
-    // kurse: kuerzel and lehrer
-    // unterricht: nummer, fach, gruppe and lehrer
-    // aufsichten: tag, vorstunde, uhrzeit, zeit, ort, aenderung and fuer
-    // sperrungen: tag, stunde
-    // planinfo: tag, stunde and text
-    
+    // Remove duplicate school weeks and calendar weeks using their complete identity.
+    combined.schulwochen = uniqueBy(combined.schulwochen, ["number", "kw", "weektype", "datumvon", "datumbis"]);
+    combined.kalenderwochen = uniqueBy(combined.kalenderwochen, ["number", "kw", "weektype", "datumvon", "datumbis"]);
 
-    // Removing duplicate entries from changes based on stunde, fach, lehrer, klasse, fachChanged, lehrerChanged and raumChanged
-    combined.changes = Array.from(new Set(combined.changes.map(change => JSON.stringify(change)))).map(change => JSON.parse(change));
+    // Merge entries with the same entity name and deduplicate each nested collection.
+    combined.dayData = combineMainData(combined.dayData);
+    combined.weeklyData = combineMainData(combined.weeklyData);
 
-    // Removing duplicate entries from klausuren based on jahrgang, kurs, stunde, beginn and dauer
-    combined.klausuren = Array.from(new Set(combined.klausuren.map(klausur => JSON.stringify(klausur)))).map(klausur => JSON.parse(klausur));
+    // Changes are unique by their lesson and changed-field values.
+    combined.changes = uniqueBy(combined.changes, ["stunde", "fach", "lehrer", "klasse", "fachChanged", "lehrerChanged", "raumChanged"]);
+
+    // Exams are unique by year group, course, period, start time, and duration.
+    combined.klausuren = uniqueBy(combined.klausuren, ["jahrgang", "kurs", "stunde", "beginn", "dauer"]);
 
     return combined;
+}
+
+/**
+ * @template T
+ * @param {Array<T>} values
+ * @param {Array<keyof T>} fields
+ * @returns {Array<T>}
+ */
+function uniqueBy(values, fields) {
+    const seen = new Set();
+    return values.filter(value => {
+            const key = fields.map(field => serializeKeyValue(value[field])).join("\u001f");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+/**
+ * @param {any} value
+ * @returns {string}
+ */
+function serializeKeyValue(value) {
+    return value instanceof Date ? String(value.getTime()) : JSON.stringify(value);
+}
+
+/**
+ * @param {any} left
+ * @param {any} right
+ * @returns {boolean}
+ */
+function sameValue(left, right) {
+    if (left instanceof Date && right instanceof Date) return left.getTime() === right.getTime();
+    return left === right;
+}
+
+/**
+ * @param {Array<MainData>} entries
+ * @returns {Array<MainData>}
+ */
+function combineMainData(entries) {
+    /** @type {Map<string, MainData>} */
+    const byName = new Map();
+    for (const entry of entries) {
+        // Entries with the same entity name share one output object; all nested arrays
+        // are appended first and deduplicated below using their domain-specific keys.
+        const key = entry.name === null ? "" : entry.name;
+        let target = byName.get(key);
+        if (!target) {
+            target = {
+                name: entry.name,
+                plan: [],
+                stunden: [],
+                kurse: [],
+                unterricht: [],
+                aufsichten: [],
+                sperrungen: [],
+                planinfo: []
+            };
+            byName.set(key, target);
+        }
+        target.plan.push(...entry.plan);
+        target.stunden.push(...entry.stunden);
+        target.kurse.push(...entry.kurse);
+        target.unterricht.push(...entry.unterricht);
+        target.aufsichten.push(...entry.aufsichten);
+        target.sperrungen.push(...entry.sperrungen);
+        target.planinfo.push(...entry.planinfo);
+    }
+
+    return Array.from(byName.values()).map(entry => ({
+        name: entry.name,
+        // A plan row is identified by its week/day/period and lesson details.
+        plan: uniqueBy(entry.plan, ["woche", "wochentyp", "tag", "stunde", "fach", "lehrer", "klasse", "kurs", "raum", "beginn", "ende"]),
+        // Period definitions, courses, lessons, supervision, blocked periods, and notes
+        // each use the fields that distinguish one record in the Indiware XML.
+        stunden: uniqueBy(entry.stunden, ["stunde", "beginn", "ende"]),
+        kurse: uniqueBy(entry.kurse, ["kuerzel", "lehrer"]),
+        unterricht: uniqueBy(entry.unterricht, ["nummer", "fach", "gruppe", "lehrer"]),
+        aufsichten: uniqueBy(entry.aufsichten, ["tag", "vorstunde", "uhrzeit", "zeit", "ort", "aenderung", "fuer"]),
+        sperrungen: uniqueBy(entry.sperrungen, ["tag", "stunde"]),
+        planinfo: uniqueBy(entry.planinfo, ["tag", "stunde", "text"])
+    }));
 }

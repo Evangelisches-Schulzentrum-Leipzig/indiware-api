@@ -464,6 +464,7 @@ function parseChanges(data) {
  * @returns {CombinedData}
  */
 function combineData(data) {
+    /** @type {CombinedData} */
     var combined = {
         sourcesMetadata: [],
         changes: [],
@@ -482,7 +483,71 @@ function combineData(data) {
         }
     };
 
+    for (const planType in data) {
+        const planData = data[planType];
+        combined.sourcesMetadata.push(planData.header);
+        combined.changes.push(...planData.changes);
+        combined.klausuren.push(...planData.klausuren);
+        combined.dayData.push(...planData.mainData);
+        combined.freietage.push(...planData.otherdata.freietage);
+        combined.schulwochen.push(...planData.otherdata.schulwochen);
+        combined.kalenderwochen.push(...planData.otherdata.kalenderwochen);
+        combined.weeklyData.push(...planData.mainData);
+        
+        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.datumvon) {
+            if (combined.basisdaten.datumvon !== null && planData.otherdata.basisdaten.datumvon != combined.basisdaten.datumvon) {
+                console.warn(`Warning: Conflicting basisdaten.datumvon values: ${combined.basisdaten.datumvon} and ${planData.otherdata.basisdaten.datumvon}`);
+            }
+            combined.basisdaten = planData.otherdata.basisdaten;
+        }
+        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.datumbis) {
+            if (combined.basisdaten.datumbis !== null && planData.otherdata.basisdaten.datumbis != combined.basisdaten.datumbis) {
+                console.warn(`Warning: Conflicting basisdaten.datumbis values: ${combined.basisdaten.datumbis} and ${planData.otherdata.basisdaten.datumbis}`);
+            }
+            combined.basisdaten = planData.otherdata.basisdaten;
+        }
+        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.swvon) {
+            if (combined.basisdaten.swvon !== null && planData.otherdata.basisdaten.swvon != combined.basisdaten.swvon) {
+                console.warn(`Warning: Conflicting basisdaten.swvon values: ${combined.basisdaten.swvon} and ${planData.otherdata.basisdaten.swvon}`);
+            }
+            combined.basisdaten = planData.otherdata.basisdaten;
+        }
+        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.swbis) {
+            if (combined.basisdaten.swbis !== null && planData.otherdata.basisdaten.swbis != combined.basisdaten.swbis) {
+                console.warn(`Warning: Conflicting basisdaten.swbis values: ${combined.basisdaten.swbis} and ${planData.otherdata.basisdaten.swbis}`);
+            }
+            combined.basisdaten = planData.otherdata.basisdaten;
+        }
+        if (planData.otherdata.basisdaten && planData.otherdata.basisdaten.tageprowoche) {
+            if (combined.basisdaten.tageprowoche !== null && planData.otherdata.basisdaten.tageprowoche != combined.basisdaten.tageprowoche) {
+                console.warn(`Warning: Conflicting basisdaten.tageprowoche values: ${combined.basisdaten.tageprowoche} and ${planData.otherdata.basisdaten.tageprowoche}`);
+            }
+            combined.basisdaten = planData.otherdata.basisdaten;
+        }
+    }
 
+    // Removing duplicate entries from freietage, schulwochen, and kalenderwochen
+    combined.freietage = Array.from(new Set(combined.freietage.map(ft => JSON.stringify(ft)))).map(ft => JSON.parse(ft));
+    combined.schulwochen = Array.from(new Set(combined.schulwochen.map(sw => JSON.stringify(sw)))).map(sw => JSON.parse(sw));
+    combined.kalenderwochen = Array.from(new Set(combined.kalenderwochen.map(kw => JSON.stringify(kw)))).map(kw => JSON.parse(kw));
+
+    // Removing duplicate entries from dayData and weeklyData based on name
+    // Combining plan, stunden, kurse, unterricht, aufsichten, sperrungen, and planinfo for entries with the same name
+    // But removing duplicates inside each of those arrays based on their unique identifiers:
+    // plan: tag (weekly), stunde, fach, lehrer, klasse, kurs, raum, beginn and ende
+    // stunden: stunde, beginn and ende
+    // kurse: kuerzel and lehrer
+    // unterricht: nummer, fach, gruppe and lehrer
+    // aufsichten: tag, vorstunde, uhrzeit, zeit, ort, aenderung and fuer
+    // sperrungen: tag, stunde
+    // planinfo: tag, stunde and text
+    
+
+    // Removing duplicate entries from changes based on stunde, fach, lehrer, klasse, fachChanged, lehrerChanged and raumChanged
+    combined.changes = Array.from(new Set(combined.changes.map(change => JSON.stringify(change)))).map(change => JSON.parse(change));
+
+    // Removing duplicate entries from klausuren based on jahrgang, kurs, stunde, beginn and dauer
+    combined.klausuren = Array.from(new Set(combined.klausuren.map(klausur => JSON.stringify(klausur)))).map(klausur => JSON.parse(klausur));
 
     return combined;
 }

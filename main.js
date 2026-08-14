@@ -1,3 +1,5 @@
+// @ts-check
+
 import dotenv from "dotenv";
 dotenv.config({quiet: true});
 import jsdom from "jsdom";
@@ -26,6 +28,15 @@ var types = [
 
 var date = "20260817";
 var week = "35";
+/**
+ * @typedef {Object} OutputData
+ * @property {Object<string, string|null>} header
+ * @property {OtherData} otherdata
+ * @property {Array<changeData>} changes
+ * @property {Array<KlausurData>} klausuren
+ * @property {Array<MainData>} mainData
+ */
+/** @type {Object<string, OutputData>} */
 var outputData = {};
 for (const planType of types) {
     const baseUrl = "https://stundenplan24.de/" + process.env['INDIWARE_SCHOOL_ID'] + "/";
@@ -46,7 +57,7 @@ for (const planType of types) {
             'Authorization': 'Basic ' + Buffer.from('lehrer' + ':' + process.env['EVS_TEACH_PASSWORD'], 'utf8').toString('base64')
         }
     }
-    const query = async (path) => await fetch(baseUrl + path, { headers: headers });
+    const query = async (/** @type {string} */ path) => await fetch(baseUrl + path, { headers: headers });
     let content;
     switch (planType) {
         case "VpMobil_Class":
@@ -98,8 +109,8 @@ for (const planType of types) {
             content = await query("wplan/wdatenr/WPlanRa_" + date + ".xml");
             break;
     }
-    if (!content.ok) {
-        console.error(`Failed to fetch ${planType} plan: ${content.status} ${content.statusText}`);
+    if (!content || !content.ok) {
+        console.error(`Failed to fetch ${planType} plan: ${content ? content.status + " " + content.statusText : "No content"}`);
         continue;
     }
     const parser = new DOMParser();
@@ -120,7 +131,13 @@ for (const planType of types) {
 }
 console.log(JSON.stringify(outputData, null, 2));
 
+/**
+ * 
+ * @param {Element|Document|null} data 
+ * @returns {Object<string, string|null>}
+ */
 function parseHeader(data) {
+    if (!data) return {};
     return {
         abwesendlehrer: data.querySelector("abwesendl")?.textContent || null,
         aenderungklassen: data.querySelector("aenderungk")?.textContent || null,
@@ -143,8 +160,22 @@ function parseHeader(data) {
     }
 }
 
-
+/**
+ * @typedef {Object} OtherData
+ * @property {Array<{value: string, date: Date|null, feiertag: boolean}>} freietage
+ * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} schulwochen
+ * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} kalenderwochen
+ * @property {{datumvon: Date|null, datumbis: Date|null, swvon: string|null, swbis: string|null, tageprowoche: string|null}} basisdaten
+ */
+/**
+ * 
+ * @param {Element|Document|null} data
+ * @returns {OtherData}
+ */
 function parseOtherdata(data) {
+    /**
+     * @type {OtherData}
+     */
     var dataObj = {
         freietage: [],
         schulwochen: [],
@@ -206,6 +237,10 @@ function parseOtherdata(data) {
     return dataObj;
 }
 
+/**
+ * @param {string|null} dateString 
+ * @returns {Date|null}
+ */
 function parseYYMMDD(dateString) {
     if (!dateString || dateString.length !== 6) return null;
     const year = parseInt(dateString.substring(0, 2), 10);
@@ -215,6 +250,11 @@ function parseYYMMDD(dateString) {
     return new Date(2000 + year, month - 1, day);
 }
 
+/**
+ * 
+ * @param {string|null} dateString 
+ * @returns {Date|null}
+ */
 function parseddDmmDyyyy(dateString) {
     // dd.mm.yyyy
     if (!dateString || dateString.length !== 10) return null;
@@ -227,8 +267,25 @@ function parseddDmmDyyyy(dateString) {
     return new Date(year, month - 1, day);
 }
 
+/**
+ * @typedef {Object} KlausurData
+ * @property {string|null} jahrgang
+ * @property {string|null} kurs
+ * @property {string|null} kursleiter
+ * @property {string|null} stunde
+ * @property {string|null} beginn
+ * @property {string|null} dauer
+ * @property {string|null} kinfo
+ */
+/**
+ * 
+ * @param {Element|Document|null} data
+ * @returns {Array<KlausurData>}
+ */
 function parseKlausuren(data) {
+    /** @type {Array<KlausurData>} */
     var klausuren = [];
+    if (!data) return klausuren;
     for (const klausur of data.querySelectorAll("klausuren > klausur, klausuren > Klausur")) {
         klausuren.push({
             jahrgang: klausur.querySelector("jahrgang")?.textContent || null,
@@ -243,8 +300,26 @@ function parseKlausuren(data) {
     return klausuren;
 }
 
+/**
+ * @typedef {Object} MainData
+ * @property {string|null} name
+ * @property {Array<{woche: string|null, wochentyp: string|null, tag: string|null, stunde: string|null, fach: string|null, kurs: string|null, klasse: string|null, lehrer: string|null, raum: string|null, beginn: string|null, ende: string|null, nummer: string|null, info: string|null}>} plan
+ * @property {Array<{stunde: string|null, beginn: string|null, ende: string|null}>} stunden
+ * @property {Array<{kuerzel: string|null, lehrer: string|null}>} kurse
+ * @property {Array<{nummer: string|null, fach: string|null, gruppe: string|null, lehrer: string|null}>} unterricht
+ * @property {Array<{aenderung: string|null, tag: string|null, vorstunde: string|null, uhrzeit: string|null, zeit: string|null, ort: string|null, fuer: string|null, info: string|null}>} aufsichten
+ * @property {Array<{tag: string|null, stunde: string|null}>} sperrungen
+ * @property {Array<{text: string|null, tag: string|null, stunde: string|null}>} planinfo
+ */
+/**
+ * 
+ * @param {Element|Document|null} data
+ * @returns {Array<MainData>}
+ */
 function parseMainData(data) {
+    /** @type {Array<MainData>} */
     var mainData = [];
+    if (!data) return mainData;
     for (const entity of data.querySelectorAll("Klassen > Kl, Lehrer > Le, Raeume > Ra")) {
         var plan = [];
         for (const std of entity.querySelectorAll("Pl > Std, pl > std")) {
@@ -276,7 +351,7 @@ function parseMainData(data) {
         for (const kurs of entity.querySelectorAll("Kurse > Ku, kurse > Ku")) {
             kurse.push({
                 kuerzel: kurs.querySelector("KKz")?.textContent || null,
-                lehrer: kurs.querySelector("KKz").getAttribute("KLe") || null
+                lehrer: kurs.querySelector("KKz")?.getAttribute("KLe") || null
             });
         }
         var unterricht = [];
@@ -329,10 +404,30 @@ function parseMainData(data) {
     }
     return mainData;
 }
-        
-
+       
+/**
+ * @typedef {Object} changeData
+ * @property {string|null} stunde
+ * @property {string|null} fach
+ * @property {string|null} lehrer
+ * @property {string|null} klasse
+ * @property {string|null} vfach
+ * @property {boolean} fachChanged
+ * @property {string|null} vlehrer
+ * @property {boolean} lehrerChanged
+ * @property {string|null} vraum
+ * @property {boolean} raumChanged
+ * @property {string|null} info
+ */
+/**
+ * 
+ * @param {Element|Document|null} data
+ * @returns {Array<changeData>}
+ */
 function parseChanges(data) {
+    /** @type {Array<changeData>} */
     var changes = [];
+    if (!data) return changes;
     for (const change of data.querySelectorAll("haupt > aktion")) {
         changes.push({
             stunde: change.querySelector("stunde")?.textContent || null,
@@ -351,6 +446,23 @@ function parseChanges(data) {
     return changes;
 }
 
+/**
+ * @typedef {Object} CombinedData
+ * @property {Array<Object<string, string|null>>} sourcesMetadata
+ * @property {Array<changeData>} changes
+ * @property {Array<KlausurData>} klausuren
+ * @property {Array<MainData>} dayData
+ * @property {Array<{value: string, date: Date|null, feiertag: boolean}>} freietage
+ * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} schulwochen
+ * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} kalenderwochen
+ * @property {Array<MainData>} weeklyData
+ * @property {{datumvon: Date|null, datumbis: Date|null, swvon: string|null, swbis: string|null, tageprowoche: string|null}} basisdaten
+ */
+/**
+ * 
+ * @param {Object<string, OutputData>} data 
+ * @returns {CombinedData}
+ */
 function combineData(data) {
     var combined = {
         sourcesMetadata: [],
@@ -370,7 +482,7 @@ function combineData(data) {
         }
     };
 
-    
+
 
     return combined;
 }

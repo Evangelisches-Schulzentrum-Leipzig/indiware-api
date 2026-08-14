@@ -1,9 +1,3 @@
-import { xml2js } from 'xml-js'
-import {
-    VpMobilXmlFileSchema
-} from './xmlschema.js'
-import { matchesVpMobilXmlFileSchema } from './schemaValidator.js'
-
 export enum PlanType {
     VpMobil_Class,
     VpMobil_Teacher,
@@ -80,8 +74,6 @@ export async function query(date: string, planType: PlanType): Promise<parsedDat
             if (!content.ok) {
                 throw new Error(`Failed to fetch VpMobil class plan: ${content.status} ${content.statusText}`);
             }
-            const vpMobilClassParsed = xml2js(await content.text(), {compact: true, alwaysArray: true}) as VpMobilXmlFileSchema;
-            console.log(matchesVpMobilXmlFileSchema(vpMobilClassParsed));
             //data = parseVpMobileFile(vpMobilClassParsed);
             break;
         case PlanType.VpMobil_Teacher:
@@ -89,8 +81,6 @@ export async function query(date: string, planType: PlanType): Promise<parsedDat
             if (!content.ok) {
                 throw new Error(`Failed to fetch VpMobil teacher plan: ${content.status} ${content.statusText}`);
             }
-            const vpMobilTeacherParsed = xml2js(await content.text(), {compact: true, alwaysArray: true}) as VpMobilXmlFileSchema;
-            console.log(matchesVpMobilXmlFileSchema(vpMobilTeacherParsed));
             //data = parseVpMobileFile(vpMobilTeacherParsed);
             break;
         case PlanType.BasePlan_Class:

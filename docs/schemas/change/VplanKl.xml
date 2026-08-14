@@ -27,8 +27,6 @@
     <haupt>
         <!-- Main substitution entries for classes -->
         <aktion>
-            <!-- Class or course identifier, can include course info like "9e/ inf1" -->
-            <klasse>ClassName</klasse>
             <!-- Period number, can be range like "3-4" or single like "1" -->
             <stunde>N</stunde>
             <!-- Subject code -->
@@ -40,6 +38,8 @@
             <!-- Empty when lesson cancelled -->
             <!-- @legeaendert="ae" when teacher changed -->
             <lehrer legeaendert="ae">TeacherCode</lehrer>
+            <!-- Class or course identifier, can include course info like "9e/ inf1" -->
+            <klasse>ClassName</klasse>
             <!-- Room code -->
             <!-- Empty when lesson cancelled or location TBD -->
             <!-- @rageaendert="ae" when room changed -->

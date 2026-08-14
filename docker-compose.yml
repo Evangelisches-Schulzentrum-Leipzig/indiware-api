@@ -7,6 +7,7 @@ services:
       - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: notSecureChangeMe
+      MARIADB_ROOT_HOST: "%"
     healthcheck:
       test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
       interval: 5s

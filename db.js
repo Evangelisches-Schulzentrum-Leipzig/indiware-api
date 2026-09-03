@@ -17,8 +17,6 @@ const databaseConfig = {
     connectionLimit: 1
 };
 
-const entityTypes = new Set(['CLASS', 'TEACHER', 'ROOM']);
-
 function textValue(value) {
     return value === null || value === undefined ? null : String(value);
 }
@@ -120,6 +118,9 @@ function inferPlanType(fileName) {
 }
 
 function inferEntityType(entity) {
+    if (entity.entityType === 'CLASS' || entity.entityType === 'TEACHER' || entity.entityType === 'ROOM') {
+        return entity.entityType;
+    }
     const entityName = normalizedValue(entity.name);
     const plans = Array.isArray(entity.plan) ? entity.plan : [];
     if ((entity.kurse?.length ?? 0) > 0 || (entity.unterricht?.length ?? 0) > 0) return 'CLASS';
@@ -142,24 +143,21 @@ function rawPlanDate(sourcesMetadata, fallback) {
     return parseDate(fallback) ?? null;
 }
 
-async function getOrCreateSimple(connection, cache, tableName, columnName, value, extraColumns = '', extraValues = []) {
+async function getOrCreateSimple(connection, cache, tableName, columnName, value) {
     const canonicalValue = normalizedValue(value);
     if (!canonicalValue) return null;
-    const cacheKey = `${tableName}:${canonicalValue}:${extraValues.map(item => item ?? '<null>').join('|')}`;
+    const cacheKey = `${tableName}:${canonicalValue}`;
     if (cache.has(cacheKey)) return cache.get(cacheKey);
 
-    const existingRows = await connection.query(`SELECT id FROM \`${tableName}\` WHERE \`${columnName}\` = ?${extraColumns} LIMIT 1`, [canonicalValue, ...extraValues]);
+    const existingRows = await connection.query(`SELECT id FROM \`${tableName}\` WHERE \`${columnName}\` = ? LIMIT 1`, [canonicalValue]);
     if (existingRows.length > 0) {
         const id = Number(existingRows[0].id);
         cache.set(cacheKey, id);
         return id;
     }
 
-    const columns = `\`${columnName}\`${extraColumns ? `, ${extraColumns.replaceAll('?', '')}` : ''}`;
-    const placeholders = ['?'];
-    if (extraValues.length > 0) placeholders.push(...extraValues.map(() => '?'));
-    await connection.query(`INSERT INTO \`${tableName}\` (${columns}) VALUES (${placeholders.join(', ')})`, [canonicalValue, ...extraValues]);
-    const insertedRows = await connection.query(`SELECT id FROM \`${tableName}\` WHERE \`${columnName}\` = ?${extraColumns} ORDER BY id DESC LIMIT 1`, [canonicalValue, ...extraValues]);
+    await connection.query(`INSERT INTO \`${tableName}\` (\`${columnName}\`) VALUES (?)`, [canonicalValue]);
+    const insertedRows = await connection.query(`SELECT id FROM \`${tableName}\` WHERE \`${columnName}\` = ? ORDER BY id DESC LIMIT 1`, [canonicalValue]);
     if (insertedRows.length === 0) throw new Error(`Could not create ${tableName}.${columnName}=${canonicalValue}`);
     const id = Number(insertedRows[0].id);
     cache.set(cacheKey, id);
@@ -199,8 +197,9 @@ async function getOrCreateRoom(connection, cache, value) {
 }
 
 async function getOrCreateWeekType(connection, cache, value) {
-    const canonicalValue = normalizedValue(value);
-    if (!canonicalValue) return null;
+    const displayValue = normalizedValue(value);
+    if (!displayValue) return null;
+    const canonicalValue = displayValue.replace(/[- ]?Woche$/i, '').trim() || displayValue;
     const cacheKey = `week_types:${canonicalValue}`;
     if (cache.has(cacheKey)) return cache.get(cacheKey);
     const existingRows = await connection.query('SELECT id FROM week_types WHERE code = ? LIMIT 1', [canonicalValue]);
@@ -209,7 +208,7 @@ async function getOrCreateWeekType(connection, cache, value) {
         cache.set(cacheKey, id);
         return id;
     }
-    await connection.query('INSERT INTO week_types (code, name) VALUES (?, ?)', [canonicalValue, `${canonicalValue}-Woche`]);
+    await connection.query('INSERT INTO week_types (code, name) VALUES (?, ?)', [canonicalValue, displayValue]);
     const insertedRows = await connection.query('SELECT id FROM week_types WHERE code = ? LIMIT 1', [canonicalValue]);
     if (insertedRows.length === 0) throw new Error(`Could not create week type ${canonicalValue}`);
     const id = Number(insertedRows[0].id);
@@ -312,19 +311,20 @@ async function ensureEntityPeriod(connection, entityType, entityId, periodNumber
     return null;
 }
 
-async function insertSource(connection, source, outputHash) {
+async function insertSource(connection, source, importBatchId) {
     const sourceDate = parseDateFromFileName(source.datei) ?? parseDate(source.datum);
     const validFrom = parseDate(source.gueltigab);
     const result = await connection.query(
         `INSERT INTO sources_metadata
-            (file_name, plan_type, plan_date_text, plan_date, generation_timestamp,
+            (import_batch_id, file_name, plan_type, plan_date_text, plan_date, generation_timestamp,
              school_name, school_city, school_number, title, days_per_week,
              school_week_number, is_native, valid_from, up_name, up_module, up_version,
-             absent_teachers_raw, changed_classes_raw, changed_teachers_raw, file_hash)
+             absent_teachers_raw, changed_classes_raw, changed_teachers_raw)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
+            importBatchId,
             textValue(source.datei) ?? 'unknown',
-            inferPlanType(source.datei),
+            textValue(source.planType) ?? inferPlanType(source.datei),
             textValue(source.datum),
             sourceDate,
             parseTimestamp(source.zeitstempel),
@@ -341,47 +341,46 @@ async function insertSource(connection, source, outputHash) {
             textValue(source.upversion),
             textValue(source.abwesendlehrer),
             textValue(source.aenderungklassen),
-            textValue(source.aenderunglehrer),
-            outputHash
+            textValue(source.aenderunglehrer)
         ]
     );
     return Number(result.insertId);
 }
 
-async function insertSyntheticSource(connection, inputFileName, outputHash, planDate) {
+async function insertImportBatch(connection, inputFileName, outputHash, payload) {
     const result = await connection.query(
-        `INSERT INTO sources_metadata
-            (file_name, plan_type, plan_date_text, plan_date, file_hash)
-         VALUES (?, 'combined', ?, ?, ?)`,
-        [inputFileName, planDate, planDate, outputHash]
+        `INSERT INTO import_batches (source_path, sha256, payload)
+         VALUES (?, ?, ?)`,
+        [inputFileName, outputHash, payload]
     );
     return Number(result.insertId);
 }
 
 async function removePreviousImport(connection, outputHash) {
-    const sourceRows = await connection.query('SELECT id FROM sources_metadata WHERE file_hash = ?', [outputHash]);
-    const sourceIds = sourceRows.map(row => Number(row.id));
-    if (sourceIds.length === 0) return;
+    const batchRows = await connection.query('SELECT id FROM import_batches WHERE sha256 = ?', [outputHash]);
+    const batchIds = batchRows.map(row => Number(row.id));
+    if (batchIds.length === 0) return;
 
     for (const tableName of [
         'academic_base_data',
         'break_supervisions',
         'exams',
-        'blocked_periods',
         'plan_notes',
         'changes',
         'daily_timetable_entries',
         'weekly_timetable_plans'
     ]) {
-        if (tableName === 'blocked_periods') continue;
-        for (const sourceId of sourceIds) {
-            await connection.query(`DELETE FROM \`${tableName}\` WHERE source_id = ?`, [sourceId]);
+        for (const batchId of batchIds) {
+            await connection.query(`DELETE FROM \`${tableName}\` WHERE import_batch_id = ?`, [batchId]);
         }
     }
-    await connection.query('DELETE FROM sources_metadata WHERE file_hash = ?', [outputHash]);
+    for (const batchId of batchIds) {
+        await connection.query('DELETE FROM sources_metadata WHERE import_batch_id = ?', [batchId]);
+    }
+    await connection.query('DELETE FROM import_batches WHERE sha256 = ?', [outputHash]);
 }
 
-async function insertCalendarData(connection, outputData, sourceId) {
+async function insertCalendarData(connection, outputData, importBatchId) {
     for (const holiday of outputData.freietage ?? []) {
         const holidayDate = parseDate(holiday.date) ?? parseDate(holiday.value);
         if (!holidayDate) throw new Error(`Holiday has no valid date: ${JSON.stringify(holiday)}`);
@@ -426,10 +425,10 @@ async function insertCalendarData(connection, outputData, sourceId) {
     if (baseData) {
         await connection.query(
             `INSERT INTO academic_base_data
-                (source_id, valid_from, valid_to, school_week_from, school_week_to, days_per_week)
+                (import_batch_id, valid_from, valid_to, school_week_from, school_week_to, days_per_week)
              VALUES (?, ?, ?, ?, ?, ?)`,
             [
-                sourceId,
+                importBatchId,
                 parseDate(baseData.datumvon),
                 parseDate(baseData.datumbis),
                 integerValue(baseData.swvon),
@@ -480,17 +479,19 @@ async function insertPlanRows(connection, outputData, references, sourceId, plan
         const entityType = inferEntityType(entity);
         for (const plan of entity.plan ?? []) {
             const periodNumber = requiredInteger(plan.stunde, 'daily period number');
-            const classValue = plan.klasse ?? (entityType === 'CLASS' ? entity.name : null);
+            const classValue = normalizedValue(plan.klasse) ?? (entityType === 'CLASS' ? entity.name : null);
+            const teacherValue = normalizedValue(plan.lehrer) ?? (entityType === 'TEACHER' ? entity.name : null);
+            const roomValue = normalizedValue(plan.raum) ?? (entityType === 'ROOM' ? entity.name : null);
             const classId = await getOrCreateClass(connection, references.cache, classValue);
-            const teacherId = await getOrCreateTeacher(connection, references.cache, plan.lehrer);
+            const teacherId = await getOrCreateTeacher(connection, references.cache, teacherValue);
             const subjectId = await getOrCreateSubject(connection, references.cache, plan.fach);
-            const roomId = await getOrCreateRoom(connection, references.cache, plan.raum);
+            const roomId = await getOrCreateRoom(connection, references.cache, roomValue);
             const courseId = await getOrCreateCourse(connection, references.courseCache, plan.kurs, classId, teacherId);
             await connection.query(
                 `INSERT INTO daily_timetable_entries
                     (plan_date, entity_type, entity_name, period_number, start_time, end_time,
                      class_id, teacher_id, subject_id, room_id, course_id, lesson_number,
-                     raw_class, raw_teacher, raw_subject, raw_room, info, is_cancelled, source_id)
+                     raw_class, raw_teacher, raw_subject, raw_room, info, is_cancelled, import_batch_id)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     planDate,
@@ -521,17 +522,19 @@ async function insertPlanRows(connection, outputData, references, sourceId, plan
         const entityType = inferEntityType(entity);
         for (const plan of entity.plan ?? []) {
             const periodNumber = requiredInteger(plan.stunde, 'weekly period number');
-            const classValue = plan.klasse ?? (entityType === 'CLASS' ? entity.name : null);
+            const classValue = normalizedValue(plan.klasse) ?? (entityType === 'CLASS' ? entity.name : null);
+            const teacherValue = normalizedValue(plan.lehrer) ?? (entityType === 'TEACHER' ? entity.name : null);
+            const roomValue = normalizedValue(plan.raum) ?? (entityType === 'ROOM' ? entity.name : null);
             const classId = await getOrCreateClass(connection, references.cache, classValue);
-            const teacherId = await getOrCreateTeacher(connection, references.cache, plan.lehrer);
+            const teacherId = await getOrCreateTeacher(connection, references.cache, teacherValue);
             const subjectId = await getOrCreateSubject(connection, references.cache, plan.fach);
-            const roomId = await getOrCreateRoom(connection, references.cache, plan.raum);
+            const roomId = await getOrCreateRoom(connection, references.cache, roomValue);
             const courseId = await getOrCreateCourse(connection, references.courseCache, plan.kurs, classId, teacherId);
             await connection.query(
                 `INSERT INTO weekly_timetable_plans
                     (entity_type, entity_name, school_week, week_type_id, day_of_week, period_number,
                      class_id, teacher_id, subject_id, room_id, course_id, lesson_number,
-                     raw_class, raw_teacher, raw_subject, raw_room, info, source_id)
+                     raw_class, raw_teacher, raw_subject, raw_room, info, import_batch_id)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     entityType,
@@ -578,7 +581,7 @@ async function insertChanges(connection, outputData, references, sourceId, chang
         }
         await connection.query(
             `INSERT INTO changes
-                (change_date, source_id, raw_period, period_start, period_end, class_id, raw_class,
+                (change_date, import_batch_id, raw_period, period_start, period_end, class_id, raw_class,
                  current_subject_id, raw_current_subject, original_subject_id, raw_original_subject,
                  is_subject_changed, current_teacher_id, raw_current_teacher, original_teacher_id,
                  raw_original_teacher, is_teacher_changed, room_id, raw_room, is_room_changed,
@@ -636,7 +639,7 @@ async function insertAdditionalData(connection, outputData, references, sourceId
             for (const supervision of entity.aufsichten ?? []) {
                 await connection.query(
                     `INSERT INTO break_supervisions
-                        (duty_date, source_id, teacher_id, raw_teacher, day_of_week, preceding_period,
+                        (duty_date, import_batch_id, teacher_id, raw_teacher, day_of_week, preceding_period,
                          duty_time, slot_name, location, change_type, substitute_for_teacher_id,
                          substitute_for_raw, info)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -664,7 +667,7 @@ async function insertAdditionalData(connection, outputData, references, sourceId
                 await connection.query(
                     `INSERT INTO plan_notes
                         (entity_type, entity_name, teacher_id, class_id, room_id, day_of_week,
-                         period_number, note_text, plan_date, source_id)
+                         period_number, note_text, plan_date, import_batch_id)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         entityType,
@@ -708,7 +711,7 @@ async function insertAdditionalData(connection, outputData, references, sourceId
         const courseId = await getOrCreateCourse(connection, references.courseCache, exam.kurs, null, teacherId);
         await connection.query(
             `INSERT INTO exams
-                (exam_date, source_id, grade_level, course_code, course_id, teacher_id,
+                (exam_date, import_batch_id, grade_level, course_code, course_id, teacher_id,
                  raw_teacher, period_number, start_time, duration_minutes, info)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -765,7 +768,7 @@ async function verifyImport(connection, expected) {
         exams: expected.exams
     };
     for (const [tableName, expectedCount] of Object.entries(importedCounts)) {
-        const rows = await connection.query(`SELECT COUNT(*) AS count FROM \`${tableName}\` WHERE source_id = ?`, [expected.sourceId]);
+        const rows = await connection.query(`SELECT COUNT(*) AS count FROM \`${tableName}\` WHERE import_batch_id = ?`, [expected.importBatchId]);
         const actualCount = Number(rows[0].count);
         if (actualCount !== expectedCount) throw new Error(`${tableName}: expected ${expectedCount}, inserted ${actualCount}`);
     }
@@ -778,14 +781,17 @@ async function main() {
     const outputHash = crypto.createHash('sha256').update(inputBuffer).digest('hex');
     const sourcesMetadata = Array.isArray(outputData.sourcesMetadata) ? outputData.sourcesMetadata : [];
     const planDate = rawPlanDate(sourcesMetadata, outputData.changes?.[0]?.date);
+    if (!planDate && ((outputData.dayData?.length ?? 0) > 0 || (outputData.changes?.length ?? 0) > 0)) {
+        throw new Error('Could not determine the plan date from sourcesMetadata or changes');
+    }
     const connection = await mariadb.createConnection(databaseConfig);
 
     try {
         await connection.beginTransaction();
         await removePreviousImport(connection, outputHash);
+        const importBatchId = await insertImportBatch(connection, path.resolve(inputPath), outputHash, inputBuffer.toString('utf8'));
         const sourceIds = [];
-        for (const source of sourcesMetadata) sourceIds.push(await insertSource(connection, source, outputHash));
-        const importSourceId = await insertSyntheticSource(connection, path.basename(inputPath), outputHash, planDate);
+        for (const source of sourcesMetadata) sourceIds.push(await insertSource(connection, source, importBatchId));
 
         const references = {
             cache: new Map(),
@@ -795,15 +801,15 @@ async function main() {
             weekTypeCache: new Map()
         };
 
-        await insertCalendarData(connection, outputData, importSourceId);
+        await insertCalendarData(connection, outputData, importBatchId);
         await seedEntityMetadata(connection, outputData, references);
-        await insertPlanRows(connection, outputData, references, importSourceId, planDate);
-        await insertChanges(connection, outputData, references, importSourceId, planDate);
-        await insertAdditionalData(connection, outputData, references, importSourceId, planDate);
+        await insertPlanRows(connection, outputData, references, importBatchId, planDate);
+        await insertChanges(connection, outputData, references, importBatchId, planDate);
+        await insertAdditionalData(connection, outputData, references, importBatchId, planDate);
         await connection.commit();
 
         const counts = await verifyImport(connection, {
-            sourceId: importSourceId,
+            importBatchId,
             dailyPlans: (outputData.dayData ?? []).reduce((total, entity) => total + (entity.plan?.length ?? 0), 0),
             weeklyPlans: (outputData.weeklyData ?? []).reduce((total, entity) => total + (entity.plan?.length ?? 0), 0),
             changes: outputData.changes?.length ?? 0,
@@ -812,7 +818,7 @@ async function main() {
             exams: outputData.klausuren?.length ?? 0
         });
         console.log(`Imported ${inputPath} into ${databaseName}.`);
-        console.log(`Import source id: ${importSourceId}; hash: ${outputHash}`);
+        console.log(`Import batch id: ${importBatchId}; hash: ${outputHash}`);
         console.log(`Stored source headers: ${sourceIds.length}; daily plans: ${counts.daily_timetable_entries}; weekly plans: ${counts.weekly_timetable_plans}; changes: ${counts.changes}.`);
         console.log(`Reference totals: classes ${counts.classes}, teachers ${counts.teachers}, subjects ${counts.subjects}, rooms ${counts.rooms}, courses ${counts.courses}.`);
     } catch (error) {

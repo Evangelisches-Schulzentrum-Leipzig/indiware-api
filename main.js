@@ -26,7 +26,7 @@ var types = [
     "WeeklyChange_Room"
 ];
 
-var date = "20260817";
+var date = "20260901";
 var week = "35";
 /**
  * @typedef {Object} OutputData
@@ -303,6 +303,7 @@ function parseKlausuren(data) {
 /**
  * @typedef {Object} MainData
  * @property {string|null} name
+ * @property {"CLASS"|"TEACHER"|"ROOM"} entityType
  * @property {Array<{woche: string|null, wochentyp: string|null, tag: string|null, stunde: string|null, fach: string|null, kurs: string|null, klasse: string|null, lehrer: string|null, raum: string|null, beginn: string|null, ende: string|null, nummer: string|null, info: string|null}>} plan
  * @property {Array<{stunde: string|null, beginn: string|null, ende: string|null}>} stunden
  * @property {Array<{kuerzel: string|null, lehrer: string|null}>} kurse
@@ -323,6 +324,7 @@ function parseMainData(data) {
     for (const entity of data.querySelectorAll("Klassen > Kl, Lehrer > Le, Raeume > Ra")) {
         if (!entity) continue;
         if (!entity.querySelector("Kurz")) continue;
+        var entityType = /** @type {"CLASS"|"TEACHER"|"ROOM"} */ (entity.tagName == "Kl" ? "CLASS" : entity.tagName == "Le" ? "TEACHER" : "ROOM");
         var klasse = null;
         var lehrer = null;
         var raum = null;
@@ -408,6 +410,7 @@ function parseMainData(data) {
         }
         mainData.push({
             name: entity.querySelector("Kurz")?.textContent || null,
+            entityType: entityType,
             plan: plan,
             stunden: stunden,
             kurse: kurse,
@@ -503,7 +506,7 @@ function combineData(data) {
 
         // Combine source headers, changes, exams, holidays, school weeks, and calendar weeks
         // by appending the corresponding arrays from every successfully fetched source.
-        combined.sourcesMetadata.push(planData.header);
+        combined.sourcesMetadata.push({...planData.header, planType: planType});
         combined.changes.push(...planData.changes);
         combined.klausuren.push(...planData.klausuren);
         combined.freietage.push(...planData.otherdata.freietage);
@@ -598,11 +601,12 @@ function combineMainData(entries) {
     for (const entry of entries) {
         // Entries with the same entity name share one output object; all nested arrays
         // are appended first and deduplicated below using their domain-specific keys.
-        const key = entry.name === null ? "" : entry.name;
+        const key = `${entry.entityType}\u001f${entry.name === null ? "" : entry.name}`;
         let target = byName.get(key);
         if (!target) {
             target = {
                 name: entry.name,
+            entityType: entry.entityType,
                 plan: [],
                 stunden: [],
                 kurse: [],
@@ -624,6 +628,7 @@ function combineMainData(entries) {
 
     return Array.from(byName.values()).map(entry => ({
         name: entry.name,
+        entityType: entry.entityType,
         // A plan row is identified by its week/day/period and lesson details.
         plan: uniqueBy(entry.plan, ["woche", "wochentyp", "tag", "stunde", "fach", "lehrer", "klasse", "kurs", "raum", "beginn", "ende"]),
         // Period definitions, courses, lessons, supervision, blocked periods, and notes

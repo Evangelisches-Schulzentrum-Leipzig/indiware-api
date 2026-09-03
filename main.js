@@ -321,6 +321,21 @@ function parseMainData(data) {
     var mainData = [];
     if (!data) return mainData;
     for (const entity of data.querySelectorAll("Klassen > Kl, Lehrer > Le, Raeume > Ra")) {
+        if (!entity) continue;
+        if (!entity.querySelector("Kurz")) continue;
+        var klasse = null;
+        var lehrer = null;
+        var raum = null;
+        if (entity.tagName == "Kl") {
+            klasse = entity.querySelector("Kurz")?.textContent || null;
+            if (!klasse) continue;
+        } else if (entity.tagName == "Le") {
+            lehrer = entity.querySelector("Kurz")?.textContent || null;
+            if (!lehrer) continue;
+        } else if (entity.tagName == "Ra") {
+            raum = entity.querySelector("Kurz")?.textContent || null;
+            if (!raum) continue;
+        }
         var plan = [];
         for (const std of entity.querySelectorAll("Pl > Std, pl > std")) {
             plan.push({
@@ -330,9 +345,9 @@ function parseMainData(data) {
                 stunde: std.querySelector("PlSt")?.textContent || std.querySelector("St")?.textContent || null,
                 fach: std.querySelector("PlFa")?.textContent || std.querySelector("Fa")?.textContent || null,
                 kurs: std.querySelector("PlKu")?.textContent || null,
-                klasse: std.querySelector("PlKl")?.textContent || null,
-                lehrer: std.querySelector("PlLe")?.textContent || std.querySelector("Le")?.textContent || null,
-                raum: std.querySelector("PlRa")?.textContent || std.querySelector("Ra")?.textContent || null,
+                klasse: std.querySelector("PlKl")?.textContent || klasse || null,
+                lehrer: std.querySelector("PlLe")?.textContent || std.querySelector("Le")?.textContent || lehrer || null,
+                raum: std.querySelector("PlRa")?.textContent || std.querySelector("Ra")?.textContent || raum || null,
                 beginn: std.querySelector("Beginn")?.textContent || null,
                 ende: std.querySelector("Ende")?.textContent || null,
                 nummer: std.querySelector("Nr")?.textContent || null,

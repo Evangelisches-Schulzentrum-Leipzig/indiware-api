@@ -116,10 +116,10 @@ for (const planType of types) {
     const parser = new DOMParser();
     let data = parser.parseFromString(await content.text(), "application/xml");
     var header = parseHeader(data.querySelector("Kopf") || data.querySelector("kopf"));
-    var dataObj = parseOtherdata(data);
-    var changes = parseChanges(data);
-    var klausuren = parseKlausuren(data);
-    var mainData = parseMainData(data);
+    var dataObj = parseOtherdata(data, planType);
+    var changes = parseChanges(data, planType);
+    var klausuren = parseKlausuren(data, planType);
+    var mainData = parseMainData(data, planType);
     
     outputData[planType] = {
         header: header,
@@ -165,14 +165,16 @@ function parseHeader(data) {
  * @property {Array<{value: string, date: Date|null, feiertag: boolean}>} freietage
  * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} schulwochen
  * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} kalenderwochen
+ * @property {Array<{sourcePlanType: string|null, rawText: string}>} aufsichten
  * @property {{datumvon: Date|null, datumbis: Date|null, swvon: string|null, swbis: string|null, tageprowoche: string|null}} basisdaten
  */
 /**
  * 
  * @param {Element|Document|null} data
+ * @param {string|null} sourcePlanType
  * @returns {OtherData}
  */
-function parseOtherdata(data) {
+function parseOtherdata(data, sourcePlanType = null) {
     /**
      * @type {OtherData}
      */
@@ -180,6 +182,7 @@ function parseOtherdata(data) {
         freietage: [],
         schulwochen: [],
         kalenderwochen: [],
+        aufsichten: [],
         basisdaten: {
             datumvon: null,
             datumbis: null,
@@ -189,6 +192,10 @@ function parseOtherdata(data) {
         },
     };
     if (!data) return dataObj;
+    for (const line of data.querySelectorAll("aufsichten > aufsichtzeile, Aufsichten > Aufsichtzeile")) {
+        const rawText = line.querySelector("aufsichtinfo")?.textContent?.trim() || line.textContent?.trim() || "";
+        if (rawText) dataObj.aufsichten.push({sourcePlanType: sourcePlanType, rawText: rawText});
+    }
     if (data.querySelector("FreieTage") || data.querySelector("freietage")) {
         var freietage = data.querySelectorAll("FreieTage > ft, freietage > ft");
         freietage.forEach(tag => {
@@ -269,6 +276,7 @@ function parseddDmmDyyyy(dateString) {
 
 /**
  * @typedef {Object} KlausurData
+ * @property {string|null} sourcePlanType
  * @property {string|null} jahrgang
  * @property {string|null} kurs
  * @property {string|null} kursleiter
@@ -280,14 +288,16 @@ function parseddDmmDyyyy(dateString) {
 /**
  * 
  * @param {Element|Document|null} data
+ * @param {string|null} sourcePlanType
  * @returns {Array<KlausurData>}
  */
-function parseKlausuren(data) {
+function parseKlausuren(data, sourcePlanType = null) {
     /** @type {Array<KlausurData>} */
     var klausuren = [];
     if (!data) return klausuren;
     for (const klausur of data.querySelectorAll("klausuren > klausur, klausuren > Klausur")) {
         klausuren.push({
+            sourcePlanType: sourcePlanType,
             jahrgang: klausur.querySelector("jahrgang")?.textContent || null,
             kurs: klausur.querySelector("kurs")?.textContent || null,
             kursleiter: klausur.querySelector("kursleiter")?.textContent || null,
@@ -304,6 +314,7 @@ function parseKlausuren(data) {
  * @typedef {Object} MainData
  * @property {string|null} name
  * @property {"CLASS"|"TEACHER"|"ROOM"} entityType
+ * @property {string|null} sourcePlanType
  * @property {Array<{woche: string|null, wochentyp: string|null, tag: string|null, stunde: string|null, fach: string|null, kurs: string|null, klasse: string|null, lehrer: string|null, raum: string|null, beginn: string|null, ende: string|null, nummer: string|null, info: string|null}>} plan
  * @property {Array<{stunde: string|null, beginn: string|null, ende: string|null}>} stunden
  * @property {Array<{kuerzel: string|null, lehrer: string|null}>} kurse
@@ -315,31 +326,30 @@ function parseKlausuren(data) {
 /**
  * 
  * @param {Element|Document|null} data
+ * @param {string|null} planType
  * @returns {Array<MainData>}
  */
-function parseMainData(data) {
+function parseMainData(data, planType = null) {
     /** @type {Array<MainData>} */
     var mainData = [];
     if (!data) return mainData;
     for (const entity of data.querySelectorAll("Klassen > Kl, Lehrer > Le, Raeume > Ra")) {
         if (!entity) continue;
         if (!entity.querySelector("Kurz")) continue;
-        var entityType = /** @type {"CLASS"|"TEACHER"|"ROOM"} */ (entity.tagName == "Kl" ? "CLASS" : entity.tagName == "Le" ? "TEACHER" : "ROOM");
+        var entityType = /** @type {"CLASS"|"TEACHER"|"ROOM"} */ (planType?.endsWith("_Teacher") ? "TEACHER" : planType?.endsWith("_Room") ? "ROOM" : entity.tagName == "Kl" ? "CLASS" : entity.tagName == "Le" ? "TEACHER" : "ROOM");
+        var entityName = entity.querySelector("Kurz")?.textContent || null;
         var klasse = null;
         var lehrer = null;
         var raum = null;
-        if (entity.tagName == "Kl") {
-            klasse = entity.querySelector("Kurz")?.textContent || null;
-            if (!klasse) continue;
-        } else if (entity.tagName == "Le") {
-            lehrer = entity.querySelector("Kurz")?.textContent || null;
-            if (!lehrer) continue;
-        } else if (entity.tagName == "Ra") {
-            raum = entity.querySelector("Kurz")?.textContent || null;
-            if (!raum) continue;
-        }
+        if (entityType == "CLASS") klasse = entityName;
+        else if (entityType == "TEACHER") lehrer = entityName;
+        else raum = entityName;
+        if (!entityName) continue;
         var plan = [];
         for (const std of entity.querySelectorAll("Pl > Std, pl > std")) {
+            var planClass = std.querySelector("PlKl")?.textContent || (planType == "VpMobil_Teacher" ? std.querySelector("Le")?.textContent : null) || (entityType == "CLASS" ? klasse : null);
+            var planTeacher = planType?.endsWith("_Teacher") ? lehrer : std.querySelector("PlLe")?.textContent || std.querySelector("Le")?.textContent || (entityType == "TEACHER" ? lehrer : null);
+            var planRoom = std.querySelector("PlRa")?.textContent || std.querySelector("Ra")?.textContent || (entityType == "ROOM" ? raum : null);
             plan.push({
                 woche: std.querySelector("PlSw")?.textContent || null,
                 wochentyp: std.querySelector("PlWo")?.textContent || null,
@@ -347,9 +357,9 @@ function parseMainData(data) {
                 stunde: std.querySelector("PlSt")?.textContent || std.querySelector("St")?.textContent || null,
                 fach: std.querySelector("PlFa")?.textContent || std.querySelector("Fa")?.textContent || null,
                 kurs: std.querySelector("PlKu")?.textContent || null,
-                klasse: std.querySelector("PlKl")?.textContent || klasse || null,
-                lehrer: std.querySelector("PlLe")?.textContent || std.querySelector("Le")?.textContent || lehrer || null,
-                raum: std.querySelector("PlRa")?.textContent || std.querySelector("Ra")?.textContent || raum || null,
+                klasse: planClass,
+                lehrer: planTeacher,
+                raum: planRoom,
                 beginn: std.querySelector("Beginn")?.textContent || null,
                 ende: std.querySelector("Ende")?.textContent || null,
                 nummer: std.querySelector("Nr")?.textContent || null,
@@ -384,7 +394,7 @@ function parseMainData(data) {
         for (const aufsicht of entity.querySelectorAll("Aufsichten > Aufsicht, aufsichten > Aufsicht")) {
             aufsichten.push({
                 aenderung: aufsicht.getAttribute("AuAe") || null,
-                tag: aufsicht.querySelector("AuTag")?.textContent || null,
+                tag: aufsicht.querySelector("AuTag")?.textContent || aufsicht.querySelector("AuTg")?.textContent || null,
                 vorstunde: aufsicht.querySelector("AuVorStunde")?.textContent || null,
                 uhrzeit: aufsicht.querySelector("AuUhrzeit")?.textContent || null,
                 zeit: aufsicht.querySelector("AuZeit")?.textContent || null,
@@ -409,8 +419,9 @@ function parseMainData(data) {
             });
         }
         mainData.push({
-            name: entity.querySelector("Kurz")?.textContent || null,
+            name: entityName,
             entityType: entityType,
+            sourcePlanType: planType,
             plan: plan,
             stunden: stunden,
             kurse: kurse,
@@ -425,6 +436,7 @@ function parseMainData(data) {
        
 /**
  * @typedef {Object} changeData
+ * @property {string|null} sourcePlanType
  * @property {string|null} stunde
  * @property {string|null} fach
  * @property {string|null} lehrer
@@ -433,6 +445,7 @@ function parseMainData(data) {
  * @property {boolean} fachChanged
  * @property {string|null} vlehrer
  * @property {boolean} lehrerChanged
+ * @property {string|null} raum
  * @property {string|null} vraum
  * @property {boolean} raumChanged
  * @property {string|null} info
@@ -440,14 +453,16 @@ function parseMainData(data) {
 /**
  * 
  * @param {Element|Document|null} data
+ * @param {string|null} sourcePlanType
  * @returns {Array<changeData>}
  */
-function parseChanges(data) {
+function parseChanges(data, sourcePlanType = null) {
     /** @type {Array<changeData>} */
     var changes = [];
     if (!data) return changes;
     for (const change of data.querySelectorAll("haupt > aktion")) {
         changes.push({
+            sourcePlanType: sourcePlanType,
             stunde: change.querySelector("stunde")?.textContent || null,
             fach: change.querySelector("fach")?.textContent || null,
             lehrer: change.querySelector("lehrer")?.textContent || null,
@@ -456,6 +471,7 @@ function parseChanges(data) {
             fachChanged: (change.querySelector("vfach") || change.querySelector("fach"))?.getAttribute("fageaendert") == "ae" || false,
             vlehrer: change.querySelector("vlehrer")?.textContent || null,
             lehrerChanged: (change.querySelector("vlehrer") || change.querySelector("lehrer"))?.getAttribute("legeaendert") == "ae" || false,
+            raum: change.querySelector("raum")?.textContent || null,
             vraum: change.querySelector("vraum")?.textContent || null,
             raumChanged: (change.querySelector("vraum") || change.querySelector("raum"))?.getAttribute("rageaendert") == "ae" || false,
             info: change.querySelector("info")?.textContent || null
@@ -470,6 +486,7 @@ function parseChanges(data) {
  * @property {Array<changeData>} changes
  * @property {Array<KlausurData>} klausuren
  * @property {Array<MainData>} dayData
+ * @property {Array<{sourcePlanType: string|null, rawText: string}>} aufsichten
  * @property {Array<{value: string, date: Date|null, feiertag: boolean}>} freietage
  * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} schulwochen
  * @property {Array<{number: string, kw: string|null, weektype: string|null, datumvon: Date|null, datumbis: Date|null}>} kalenderwochen
@@ -488,6 +505,7 @@ function combineData(data) {
         changes: [],
         klausuren: [],
         dayData: [],
+        aufsichten: [],
         freietage: [],
         schulwochen: [],
         kalenderwochen: [],
@@ -512,6 +530,7 @@ function combineData(data) {
         combined.freietage.push(...planData.otherdata.freietage);
         combined.schulwochen.push(...planData.otherdata.schulwochen);
         combined.kalenderwochen.push(...planData.otherdata.kalenderwochen);
+        combined.aufsichten.push(...planData.otherdata.aufsichten);
 
         // Basisdaten are combined field by field. The first non-null value wins;
         // later different values are reported because sources can describe different plan ranges.
@@ -549,7 +568,7 @@ function combineData(data) {
     combined.weeklyData = combineMainData(combined.weeklyData);
 
     // Changes are unique by their lesson and changed-field values.
-    combined.changes = uniqueBy(combined.changes, ["stunde", "fach", "lehrer", "klasse", "fachChanged", "lehrerChanged", "raumChanged"]);
+    combined.changes = uniqueBy(combined.changes, ["sourcePlanType", "stunde", "fach", "lehrer", "klasse", "vfach", "vlehrer", "raum", "vraum", "fachChanged", "lehrerChanged", "raumChanged", "info"]);
 
     // Exams are unique by year group, course, period, start time, and duration.
     combined.klausuren = uniqueBy(combined.klausuren, ["jahrgang", "kurs", "stunde", "beginn", "dauer"]);
@@ -601,12 +620,13 @@ function combineMainData(entries) {
     for (const entry of entries) {
         // Entries with the same entity name share one output object; all nested arrays
         // are appended first and deduplicated below using their domain-specific keys.
-        const key = `${entry.entityType}\u001f${entry.name === null ? "" : entry.name}`;
+        const key = `${entry.sourcePlanType ?? ""}\u001f${entry.entityType}\u001f${entry.name === null ? "" : entry.name}`;
         let target = byName.get(key);
         if (!target) {
             target = {
                 name: entry.name,
             entityType: entry.entityType,
+                sourcePlanType: entry.sourcePlanType,
                 plan: [],
                 stunden: [],
                 kurse: [],
@@ -629,14 +649,15 @@ function combineMainData(entries) {
     return Array.from(byName.values()).map(entry => ({
         name: entry.name,
         entityType: entry.entityType,
+        sourcePlanType: entry.sourcePlanType,
         // A plan row is identified by its week/day/period and lesson details.
-        plan: uniqueBy(entry.plan, ["woche", "wochentyp", "tag", "stunde", "fach", "lehrer", "klasse", "kurs", "raum", "beginn", "ende"]),
+        plan: uniqueBy(entry.plan, ["woche", "wochentyp", "tag", "stunde", "fach", "lehrer", "klasse", "kurs", "raum", "beginn", "ende", "nummer", "info"]),
         // Period definitions, courses, lessons, supervision, blocked periods, and notes
         // each use the fields that distinguish one record in the Indiware XML.
         stunden: uniqueBy(entry.stunden, ["stunde", "beginn", "ende"]),
         kurse: uniqueBy(entry.kurse, ["kuerzel", "lehrer"]),
         unterricht: uniqueBy(entry.unterricht, ["nummer", "fach", "gruppe", "lehrer"]),
-        aufsichten: uniqueBy(entry.aufsichten, ["tag", "vorstunde", "uhrzeit", "zeit", "ort", "aenderung", "fuer"]),
+        aufsichten: uniqueBy(entry.aufsichten, ["tag", "vorstunde", "uhrzeit", "zeit", "ort", "aenderung", "fuer", "info"]),
         sperrungen: uniqueBy(entry.sperrungen, ["tag", "stunde"]),
         planinfo: uniqueBy(entry.planinfo, ["tag", "stunde", "text"])
     }));

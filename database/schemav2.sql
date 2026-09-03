@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `sources_metadata` (
 CREATE TABLE IF NOT EXISTS `academic_base_data` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `import_batch_id` BIGINT UNSIGNED NULL,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `valid_from` DATE NULL,
     `valid_to` DATE NULL,
     `school_week_from` SMALLINT UNSIGNED NULL,
@@ -62,7 +63,9 @@ CREATE TABLE IF NOT EXISTS `academic_base_data` (
     `days_per_week` TINYINT UNSIGNED NOT NULL DEFAULT 5,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT `fk_base_data_import_batch` FOREIGN KEY (`import_batch_id`)
-        REFERENCES `import_batches` (`id`) ON DELETE SET NULL
+        REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_base_data_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB;
 
 -- =============================================================================
@@ -79,6 +82,8 @@ CREATE TABLE IF NOT EXISTS `week_types` (
 -- School weeks mapping calendar weeks to week rotation and date ranges (Schulwochen)
 CREATE TABLE IF NOT EXISTS `school_weeks` (
     `id` SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `import_batch_id` BIGINT UNSIGNED NULL,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `school_week` SMALLINT UNSIGNED NOT NULL,
     `calendar_week` TINYINT UNSIGNED NOT NULL,
     `week_type_id` TINYINT UNSIGNED NULL,
@@ -86,6 +91,10 @@ CREATE TABLE IF NOT EXISTS `school_weeks` (
     `end_date` DATE NOT NULL,
     CONSTRAINT `fk_sw_week_type` FOREIGN KEY (`week_type_id`) 
         REFERENCES `week_types` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_sw_import_batch` FOREIGN KEY (`import_batch_id`)
+        REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_sw_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     CONSTRAINT `chk_sw_kw` CHECK (`calendar_week` BETWEEN 1 AND 53),
     CONSTRAINT `chk_sw_dates` CHECK (`end_date` >= `start_date`),
     UNIQUE KEY `uq_school_week_start` (`school_week`, `start_date`),
@@ -96,12 +105,18 @@ CREATE TABLE IF NOT EXISTS `school_weeks` (
 -- Calendar weeks overview (Kalenderwochen)
 CREATE TABLE IF NOT EXISTS `calendar_weeks` (
     `id` SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `import_batch_id` BIGINT UNSIGNED NULL,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `calendar_week` TINYINT UNSIGNED NOT NULL,
     `week_type_id` TINYINT UNSIGNED NULL,
     `start_date` DATE NULL,
     `end_date` DATE NULL,
     CONSTRAINT `fk_cw_week_type` FOREIGN KEY (`week_type_id`) 
         REFERENCES `week_types` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_cw_import_batch` FOREIGN KEY (`import_batch_id`)
+        REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_cw_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     CONSTRAINT `chk_cw_kw` CHECK (`calendar_week` BETWEEN 1 AND 53),
     UNIQUE KEY `uq_calendar_week` (`calendar_week`, `start_date`, `end_date`, `week_type_id`),
     INDEX `idx_calendar_weeks_dates` (`start_date`, `end_date`)
@@ -196,6 +211,7 @@ CREATE TABLE IF NOT EXISTS `periods` (
 -- Entity-specific period timing overrides (per class, teacher or room)
 CREATE TABLE IF NOT EXISTS `entity_periods` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `entity_type` ENUM('CLASS', 'TEACHER', 'ROOM') NOT NULL DEFAULT 'CLASS',
     `class_id` SMALLINT UNSIGNED NULL,
     `teacher_id` SMALLINT UNSIGNED NULL,
@@ -209,6 +225,8 @@ CREATE TABLE IF NOT EXISTS `entity_periods` (
         REFERENCES `teachers` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ep_room` FOREIGN KEY (`room_id`) 
         REFERENCES `rooms` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_ep_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     UNIQUE KEY `uq_entity_period` (`entity_type`, `class_id`, `teacher_id`, `room_id`, `period_number`, `start_time`, `end_time`),
     INDEX `idx_ep_class_period` (`class_id`, `period_number`),
     INDEX `idx_ep_teacher_period` (`teacher_id`, `period_number`)
@@ -221,6 +239,7 @@ CREATE TABLE IF NOT EXISTS `entity_periods` (
 -- Courses offering catalog (Kurse)
 CREATE TABLE IF NOT EXISTS `courses` (
     `id` SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `code` VARCHAR(30) NOT NULL,
     `teacher_id` SMALLINT UNSIGNED NULL,
     `class_id` SMALLINT UNSIGNED NULL,
@@ -228,6 +247,8 @@ CREATE TABLE IF NOT EXISTS `courses` (
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_course_class` FOREIGN KEY (`class_id`) 
         REFERENCES `classes` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_course_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     UNIQUE KEY `uq_course_code_class_teacher` (`code`, `class_id`, `teacher_id`),
     INDEX `idx_courses_code` (`code`)
 ) ENGINE = InnoDB;
@@ -235,6 +256,7 @@ CREATE TABLE IF NOT EXISTS `courses` (
 -- Teaching units curriculum definitions (Unterricht)
 CREATE TABLE IF NOT EXISTS `teaching_units` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `lesson_number` VARCHAR(10) NOT NULL,
     `subject_id` SMALLINT UNSIGNED NOT NULL,
     `teacher_id` SMALLINT UNSIGNED NULL,
@@ -246,6 +268,8 @@ CREATE TABLE IF NOT EXISTS `teaching_units` (
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_tu_class` FOREIGN KEY (`class_id`) 
         REFERENCES `classes` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_tu_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     UNIQUE KEY `uq_teaching_unit` (`lesson_number`, `class_id`, `subject_id`, `teacher_id`, `group_name`),
     INDEX `idx_tu_lesson_number` (`lesson_number`),
     INDEX `idx_tu_class` (`class_id`),
@@ -274,6 +298,7 @@ CREATE TABLE IF NOT EXISTS `teacher_subject_room` (
 -- Recurring weekly timetable plans (WeeklyData.plan)
 CREATE TABLE IF NOT EXISTS `weekly_timetable_plans` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `entity_type` ENUM('CLASS', 'TEACHER', 'ROOM') NOT NULL DEFAULT 'CLASS',
     `entity_name` VARCHAR(64) NOT NULL,
     `school_week` SMALLINT UNSIGNED NULL,
@@ -306,6 +331,8 @@ CREATE TABLE IF NOT EXISTS `weekly_timetable_plans` (
         REFERENCES `courses` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_wtp_import_batch` FOREIGN KEY (`import_batch_id`)
         REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_wtp_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     CONSTRAINT `chk_wtp_dow` CHECK (`day_of_week` IS NULL OR `day_of_week` BETWEEN 1 AND 7),
     INDEX `idx_wtp_class_dow_period` (`class_id`, `day_of_week`, `period_number`),
     INDEX `idx_wtp_teacher_dow_period` (`teacher_id`, `day_of_week`, `period_number`),
@@ -317,6 +344,7 @@ CREATE TABLE IF NOT EXISTS `weekly_timetable_plans` (
 -- Concrete daily timetable entries / snapshot instances (DayData.plan)
 CREATE TABLE IF NOT EXISTS `daily_timetable_entries` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `plan_date` DATE NOT NULL,
     `entity_type` ENUM('CLASS', 'TEACHER', 'ROOM') NOT NULL DEFAULT 'CLASS',
     `entity_name` VARCHAR(64) NOT NULL,
@@ -348,6 +376,8 @@ CREATE TABLE IF NOT EXISTS `daily_timetable_entries` (
         REFERENCES `courses` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_dte_import_batch` FOREIGN KEY (`import_batch_id`)
         REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_dte_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     INDEX `idx_dte_date_class` (`plan_date`, `class_id`, `period_number`),
     INDEX `idx_dte_date_teacher` (`plan_date`, `teacher_id`, `period_number`),
     INDEX `idx_dte_date_room` (`plan_date`, `room_id`, `period_number`),
@@ -368,6 +398,7 @@ CREATE TABLE IF NOT EXISTS `change_states` (
 -- Daily substitutions and schedule changes (Changes)
 CREATE TABLE IF NOT EXISTS `changes` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `change_date` DATE NULL,
     `import_batch_id` BIGINT UNSIGNED NULL,
     `raw_period` VARCHAR(10) NOT NULL,
@@ -387,11 +418,15 @@ CREATE TABLE IF NOT EXISTS `changes` (
     `is_teacher_changed` BOOLEAN NOT NULL DEFAULT 0,
     `room_id` SMALLINT UNSIGNED NULL,
     `raw_room` VARCHAR(32) NULL,
+    `original_room_id` SMALLINT UNSIGNED NULL,
+    `raw_original_room` VARCHAR(32) NULL,
     `is_room_changed` BOOLEAN NOT NULL DEFAULT 0,
     `state_id` TINYINT UNSIGNED NULL,
     `info` VARCHAR(255) NULL,
     CONSTRAINT `fk_change_import_batch` FOREIGN KEY (`import_batch_id`)
         REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_change_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_change_class` FOREIGN KEY (`class_id`) 
         REFERENCES `classes` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_change_curr_subj` FOREIGN KEY (`current_subject_id`) 
@@ -403,6 +438,8 @@ CREATE TABLE IF NOT EXISTS `changes` (
     CONSTRAINT `fk_change_orig_teach` FOREIGN KEY (`original_teacher_id`) 
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_change_room` FOREIGN KEY (`room_id`) 
+        REFERENCES `rooms` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_change_original_room` FOREIGN KEY (`original_room_id`)
         REFERENCES `rooms` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_change_state` FOREIGN KEY (`state_id`) 
         REFERENCES `change_states` (`id`) ON DELETE SET NULL,
@@ -420,24 +457,28 @@ CREATE TABLE IF NOT EXISTS `changes` (
 CREATE TABLE IF NOT EXISTS `break_supervisions` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `duty_date` DATE NULL,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `import_batch_id` BIGINT UNSIGNED NULL,
     `teacher_id` SMALLINT UNSIGNED NULL,
-    `raw_teacher` VARCHAR(32) NOT NULL,
+    `raw_teacher` VARCHAR(32) NULL,
     `day_of_week` TINYINT UNSIGNED NULL,
     `preceding_period` TINYINT UNSIGNED NULL,
     `duty_time` TIME NULL,
-    `slot_name` VARCHAR(32) NOT NULL,
-    `location` VARCHAR(64) NOT NULL,
+    `slot_name` VARCHAR(32) NULL,
+    `location` VARCHAR(64) NULL,
     `change_type` VARCHAR(32) NULL,
     `substitute_for_teacher_id` SMALLINT UNSIGNED NULL,
     `substitute_for_raw` VARCHAR(32) NULL,
     `info` VARCHAR(100) NULL,
+    `raw_text` TEXT NULL,
     CONSTRAINT `fk_bs_teacher` FOREIGN KEY (`teacher_id`) 
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_bs_sub_teacher` FOREIGN KEY (`substitute_for_teacher_id`) 
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_bs_import_batch` FOREIGN KEY (`import_batch_id`)
         REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_bs_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     CONSTRAINT `chk_bs_dow` CHECK (`day_of_week` IS NULL OR `day_of_week` BETWEEN 1 AND 7),
     INDEX `idx_bs_teacher_day` (`teacher_id`, `day_of_week`),
     INDEX `idx_bs_date_teacher` (`duty_date`, `teacher_id`),
@@ -448,6 +489,7 @@ CREATE TABLE IF NOT EXISTS `break_supervisions` (
 CREATE TABLE IF NOT EXISTS `exams` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `exam_date` DATE NULL,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `import_batch_id` BIGINT UNSIGNED NULL,
     `grade_level` VARCHAR(16) NULL,
     `course_code` VARCHAR(32) NULL,
@@ -464,6 +506,8 @@ CREATE TABLE IF NOT EXISTS `exams` (
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_exam_import_batch` FOREIGN KEY (`import_batch_id`)
         REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_exam_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     INDEX `idx_exams_date` (`exam_date`),
     INDEX `idx_exams_grade` (`grade_level`),
     INDEX `idx_exams_teacher` (`teacher_id`)
@@ -472,6 +516,8 @@ CREATE TABLE IF NOT EXISTS `exams` (
 -- Blocked unavailable periods for classes, teachers, rooms (Sperrungen)
 CREATE TABLE IF NOT EXISTS `blocked_periods` (
     `id` MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `source_id` MEDIUMINT UNSIGNED NULL,
+    `import_batch_id` BIGINT UNSIGNED NULL,
     `entity_type` ENUM('TEACHER', 'CLASS', 'ROOM') NOT NULL,
     `entity_name` VARCHAR(32) NOT NULL,
     `teacher_id` SMALLINT UNSIGNED NULL,
@@ -486,6 +532,10 @@ CREATE TABLE IF NOT EXISTS `blocked_periods` (
         REFERENCES `classes` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_bp_room` FOREIGN KEY (`room_id`) 
         REFERENCES `rooms` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_bp_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_bp_import_batch` FOREIGN KEY (`import_batch_id`)
+        REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
     CONSTRAINT `chk_bp_dow` CHECK (`day_of_week` BETWEEN 1 AND 7),
     CONSTRAINT `chk_bp_period` CHECK (`period_number` BETWEEN 0 AND 20),
     UNIQUE KEY `uq_blocked_period` (`entity_type`, `entity_name`, `day_of_week`, `period_number`),
@@ -504,6 +554,7 @@ CREATE TABLE IF NOT EXISTS `plan_notes` (
     `period_number` TINYINT UNSIGNED NOT NULL,
     `note_text` VARCHAR(255) NOT NULL,
     `plan_date` DATE NULL,
+    `source_id` MEDIUMINT UNSIGNED NULL,
     `import_batch_id` BIGINT UNSIGNED NULL,
     CONSTRAINT `fk_pn_teacher` FOREIGN KEY (`teacher_id`) 
         REFERENCES `teachers` (`id`) ON DELETE SET NULL,
@@ -513,6 +564,8 @@ CREATE TABLE IF NOT EXISTS `plan_notes` (
         REFERENCES `rooms` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_pn_import_batch` FOREIGN KEY (`import_batch_id`)
         REFERENCES `import_batches` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_pn_source` FOREIGN KEY (`source_id`)
+        REFERENCES `sources_metadata` (`id`) ON DELETE SET NULL,
     CONSTRAINT `chk_pn_dow` CHECK (`day_of_week` BETWEEN 1 AND 7),
     CONSTRAINT `chk_pn_period` CHECK (`period_number` BETWEEN 0 AND 20),
     INDEX `idx_pn_entity_day_period` (`entity_name`, `day_of_week`, `period_number`),
@@ -588,6 +641,7 @@ SELECT
     COALESCE(orig_t.short_name, ch.raw_original_teacher) AS original_teacher,
     ch.is_teacher_changed,
     COALESCE(rm.name, ch.raw_room) AS replacement_room,
+    COALESCE(orig_rm.name, ch.raw_original_room) AS original_room,
     ch.is_room_changed,
     cs.name AS change_state,
     ch.info
@@ -598,4 +652,5 @@ LEFT JOIN `subjects` orig_s ON ch.original_subject_id = orig_s.id
 LEFT JOIN `teachers` curr_t ON ch.current_teacher_id = curr_t.id
 LEFT JOIN `teachers` orig_t ON ch.original_teacher_id = orig_t.id
 LEFT JOIN `rooms` rm ON ch.room_id = rm.id
+LEFT JOIN `rooms` orig_rm ON ch.original_room_id = orig_rm.id
 LEFT JOIN `change_states` cs ON ch.state_id = cs.id;
